@@ -188,7 +188,7 @@ public class SyncChannelMainPanel extends JPanel implements PropertyChangeListen
             this.searchResultItemPanels = new ArrayList<>();
         }
 
-        for (TwitchVideoInfo twitchVideoInfo : videoList.getVideoList()) {
+        for (TwitchVideoInfo twitchVideoInfo : videoList.getVideos()) {
             VideoInfoPanel videoInfoPanel = null;
             try {
                 videoInfoPanel = new VideoInfoPanel(twitchVideoInfo, controller);

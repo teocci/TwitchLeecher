@@ -2,7 +2,7 @@ package com.github.teocci.av.twitch.gui.vod.channelsync;
 
 import com.github.teocci.av.twitch.controllers.ChannelSyncController;
 import com.github.teocci.av.twitch.utils.OsUtils;
-import com.github.teocci.av.twitch.utils.TwitchToolPreferences;
+import com.github.teocci.av.twitch.TwitchLeecherPreferences;
 
 import javax.swing.*;
 import java.awt.*;
@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.prefs.Preferences;
 
 import static com.github.teocci.av.twitch.utils.Config.IMAGE_ICON;
+import static com.github.teocci.av.twitch.utils.Config.PROGRAM_VERSION;
 
 /**
  * Created by teocci.
@@ -50,24 +51,24 @@ public class ChannelSyncMenuBar extends JMenuBar implements ActionListener
             super(owner, "Select Destination Folder");
             JLabel destinationFolderLbl = new JLabel("Destination Folder:");
             final JTextField destinationFolderTextField = new JTextField();
-            destinationFolderTextField.setText(prefs.get(TwitchToolPreferences.KEY_DESTINATION_DIR, ""));
+            destinationFolderTextField.setText(prefs.get(TwitchLeecherPreferences.KEY_DESTINATION_DIR, ""));
 
             JButton selectFolderBtn = new JButton("...");
             selectFolderBtn.addActionListener(e -> {
-                String currentDestinationDirectory = prefs.get(TwitchToolPreferences.KEY_DESTINATION_DIR, OsUtils.getUserHome());
+                String currentDestinationDirectory = prefs.get(TwitchLeecherPreferences.KEY_DESTINATION_DIR, OsUtils.getUserHome());
                 File destinationDirectory = showDestinationDirChooser(currentDestinationDirectory);
                 destinationFolderTextField.setText(destinationDirectory.getPath());
             });
 
             JLabel helpTextLbl = new JLabel("<html>You are able to move the qualities up and down. " +
-                    "TwitchTools trys to download the video qualities in that order. " +
+                    "TwitchLeecher tries to download the video qualities in that order. " +
                     "If the quality at the top isn't available, it will try to download the " +
                     "second, third ... and so on.</html>");
 
 
             JButton okBtn = new JButton("OK");
             okBtn.addActionListener(e -> {
-                prefs.put(TwitchToolPreferences.KEY_DESTINATION_DIR, destinationFolderTextField.getText());
+                prefs.put(TwitchLeecherPreferences.KEY_DESTINATION_DIR, destinationFolderTextField.getText());
                 settingsFolderDialog.setVisible(false);
             });
 
@@ -98,7 +99,7 @@ public class ChannelSyncMenuBar extends JMenuBar implements ActionListener
                 }
             });
 
-            qualitiesJList = new JList(TwitchToolPreferences.getQualityOrder().toArray());
+            qualitiesJList = new JList(TwitchLeecherPreferences.getQualityOrder().toArray());
             qualitiesJList.setSelectedIndex(ListSelectionModel.SINGLE_SELECTION);
             qualitiesJList.setBorder(BorderFactory.createTitledBorder("Quality Priority"));
 
@@ -168,14 +169,14 @@ public class ChannelSyncMenuBar extends JMenuBar implements ActionListener
 
         private void moveQuality(int oldIndex, int newIndex)
         {
-            List<String> qualities = TwitchToolPreferences.getQualityOrder();
+            List<String> qualities = TwitchLeecherPreferences.getQualityOrder();
             if (newIndex < 0 || newIndex > (qualities.size() - 1))
                 return;
             String quality = qualities.get(oldIndex);
             qualities.remove(oldIndex);
             qualities.add(newIndex, quality);
-            TwitchToolPreferences.setQualityOrder(qualities);
-            qualitiesJList.setListData(TwitchToolPreferences.getQualityOrder().toArray());
+            TwitchLeecherPreferences.setQualityOrder(qualities);
+            qualitiesJList.setListData(TwitchLeecherPreferences.getQualityOrder().toArray());
             qualitiesJList.updateUI();
             qualitiesJList.setSelectedIndex(newIndex);
         }
@@ -183,20 +184,19 @@ public class ChannelSyncMenuBar extends JMenuBar implements ActionListener
 
     private class AboutThisProgramDialog extends JDialog implements ActionListener
     {
-
         private final JLabel visitProjectSiteLbl;
         private JButton closeBtn, licenseBtn;
 
         public AboutThisProgramDialog(Frame owner)
         {
-            super(owner, "About Twitch Downloader");
+            super(owner, "About Twitch Leecher");
 
             GridBagLayout layoutManager = new GridBagLayout();
             GridBagConstraints gc = new GridBagConstraints();
             this.setLayout(layoutManager);
 
             ImageIcon logoIcon = new ImageIcon(IMAGE_ICON);
-            JLabel programNameVersionLabel = new JLabel(controller.PROGRAM_VERSION, logoIcon, JLabel.CENTER);
+            JLabel programNameVersionLabel = new JLabel(PROGRAM_VERSION, logoIcon, JLabel.CENTER);
             Font origFont = programNameVersionLabel.getFont().deriveFont(Font.BOLD);
             programNameVersionLabel.setFont(origFont.deriveFont(30.0F));
             programNameVersionLabel.setVerticalTextPosition(JLabel.BOTTOM);
@@ -208,7 +208,7 @@ public class ChannelSyncMenuBar extends JMenuBar implements ActionListener
             gc.gridwidth = 2;
             add(programNameVersionLabel, gc);
 
-            JLabel copyrightLbl = new JLabel("Copyright 2014-2015 Florian Trabauer");
+            JLabel copyrightLbl = new JLabel("Copyright 2018 Jorge Frisancho");
             gc.gridy++;
             add(copyrightLbl, gc);
             visitProjectSiteLbl = new JLabel("Visit the TwitchDownloader website");
@@ -224,7 +224,7 @@ public class ChannelSyncMenuBar extends JMenuBar implements ActionListener
                 {
                     super.mouseClicked(e);
                     try {
-                        controller.openUrlInBrowser(new URL("http://lordh3lmchen.github.io/TwitchDownloader/"));
+                        controller.openUrlInBrowser(new URL("https://github.com/teocci/TwitchLeecher"));
                     } catch (MalformedURLException e1) {
                         e1.printStackTrace();
                     }
@@ -240,7 +240,7 @@ public class ChannelSyncMenuBar extends JMenuBar implements ActionListener
                 {
                     super.mouseClicked(e);
                     try {
-                        controller.openUrlInBrowser(new URL("http://trabauer.com/downloads/TwitchDownloader_LICENSE.txt"));
+                        controller.openUrlInBrowser(new URL("https://raw.githubusercontent.com/teocci/TwitchLeecher/master/LICENSE"));
                     } catch (MalformedURLException e1) {
                         e1.printStackTrace();
                     }
@@ -300,7 +300,7 @@ public class ChannelSyncMenuBar extends JMenuBar implements ActionListener
     public ChannelSyncMenuBar(ChannelSyncController controller, JFrame mainFrame)
     {
         this.controller = controller;
-        this.prefs = TwitchToolPreferences.getInstance();
+        this.prefs = TwitchLeecherPreferences.getInstance();
         this.mainFrame = mainFrame;
 
         mainFrame.setJMenuBar(this);

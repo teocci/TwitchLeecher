@@ -1,4 +1,4 @@
-package com.github.teocci.av.twitch.utils;
+package com.github.teocci.av.twitch;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -11,20 +11,21 @@ import java.util.prefs.Preferences;
  *
  * @author teocci@yandex.com on 2018-Apr-26
  */
-public class TwitchToolPreferences
+public class TwitchLeecherPreferences
 {
     private static Preferences prefs;
     private static List<String> qualities;
 
+    public static final String KEY_BASE_DIR = "baseDir";
     public static final String KEY_DESTINATION_DIR = "destinationDir";
     public static final String KEY_FILENAME_PATTERN = "filenamePattern";
 
-    private TwitchToolPreferences() {}
+    private TwitchLeecherPreferences() {}
 
     public static Preferences getInstance()
     {
         if (prefs == null) {
-            prefs = Preferences.userRoot().node("/com/trabauer/twitchtools");
+            prefs = Preferences.userRoot().node("/com/teocci/twitchleecher");
         }
         return prefs;
     }

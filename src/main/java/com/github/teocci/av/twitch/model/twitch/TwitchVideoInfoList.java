@@ -24,13 +24,13 @@ import static com.github.teocci.av.twitch.enums.State.SELECTED_FOR_DOWNLOAD;
  * <p>
  * Valid Arguments are
  * <ul>
- * <li>broadcasts=true      (or false)</li>
- * <li>limit=10             (0-100)</li>
+ * <li>limit=10     (0-100)</li>
  * <li>offset=10</li>
+ * <li>broadcast_type=true (or false)</li>
  * </ul>
  * <p>
- * https://api.twitch.tv/teocci/channels/taketv/videos?broadcasts=true&limit=20&offset=20
- * https://api.twitch.tv/teocci/channels/taketv/videos?broadcasts=true&limit=20
+ * https://api.twitch.tv/kraken/teocci/taketv/videos?broadcasts=true&limit=20&offset=20
+ * https://api.twitch.tv/kraken/teocci/taketv/videos?broadcasts=true&limit=20
  * <p>
  * Gets the past broadcats 1-20.
  * <p>
@@ -43,17 +43,13 @@ import static com.github.teocci.av.twitch.enums.State.SELECTED_FOR_DOWNLOAD;
  */
 public class TwitchVideoInfoList
 {
-    private final PropertyChangeSupport pcs;
-
     @SerializedName("_total")
-    private int size;
-
-    @SerializedName("_links")
-    private Map<String, String> links;
+    private int total;
 
     @SerializedName("videos")
-    List<TwitchVideoInfo> videoList;
-//    TwitchVideoInfo[] videos;
+    private List<TwitchVideoInfo> videos;
+
+    private final PropertyChangeSupport pcs;
 
     /**
      * Creates a empty TwitchVideoInfoList
@@ -61,9 +57,8 @@ public class TwitchVideoInfoList
     public TwitchVideoInfoList()
     {
         pcs = new PropertyChangeSupport(this);
-        videoList = new ArrayList<>();
+        videos = new ArrayList<>();
     }
-
 
     /**
      * Adds a PropertyChangeListener to the TwitchVideoInfoList
@@ -72,10 +67,10 @@ public class TwitchVideoInfoList
      * <p>
      * <p>
      * <ul>
-     * <li><code>setSize(int size)</code></li>
+     * <li><code>setSize(int total)</code></li>
      * <li><code>setNextUrl(String url)</code></li>
      * <li><code>setSelfUrl(String url)</code></li>
-     * <li><code>setVideoList(ArrayList<TwitchVideoInfo></></code></li>
+     * <li><code>setVideos(ArrayList<TwitchVideoInfo></></code></li>
      * <li><code>loadMore()</code></li>
      * </ul>
      *
@@ -101,9 +96,8 @@ public class TwitchVideoInfoList
     public String toString()
     {
         return "TwitchVideoInfoList{" +
-                "size=" + getSize() +
-                ", links=" + links +
-                //", videos=" + Arrays.toString(videos) +
+                "total=" + getTotal() +
+                ", videos=" + Arrays.toString(videos.toArray()) +
                 '}';
     }
 
@@ -118,16 +112,15 @@ public class TwitchVideoInfoList
      */
     public void update(TwitchVideoInfoList source, List<TwitchVideoInfo> cachedTVIs)
     {
-        List<TwitchVideoInfo> oldVideos = this.videoList;
-        this.setLinks(source.getLinks());
-        this.setVideoList(source.getVideoList());
+        List<TwitchVideoInfo> oldVideos = this.videos;
+        this.setVideos(source.getVideos());
 
         if (cachedTVIs != null) {
             for (TwitchVideoInfo cachedVideo : cachedTVIs) {
-                int index = this.videoList.indexOf(cachedVideo);
+                int index = this.videos.indexOf(cachedVideo);
                 if (index >= 0) { // Replace it with the cached instance of the Object
-                    this.videoList.remove(index);
-                    this.videoList.add(index, cachedVideo);
+                    this.videos.remove(index);
+                    this.videos.add(index, cachedVideo);
                     try {
                         cachedVideo.loadPreviewImage();
                     } catch (IOException e) {
@@ -137,7 +130,7 @@ public class TwitchVideoInfoList
             }
         }
 
-        pcs.firePropertyChange("contentUpdate", oldVideos, videoList);
+        pcs.firePropertyChange("contentUpdate", oldVideos, videos);
     }
 
     /**
@@ -218,98 +211,51 @@ public class TwitchVideoInfoList
     }
 
 
-    public URL getSelfUrl() throws MalformedURLException
+
+    public List<TwitchVideoInfo> getVideos()
     {
-        return new URL(links.get("self"));
+        return videos;
     }
 
-    public URL getNextUrl() throws MalformedURLException
+    public int getTotal()
     {
-        return new URL(links.get("next"));
+        return total;
     }
 
-    public String getNextUrlString()
+    private void setVideos(List<TwitchVideoInfo> videos)
     {
-        return this.links.get("next");
-    }
-
-    public String getSelfUrlString()
-    {
-        return this.links.get("self");
-    }
-
-
-    public List<TwitchVideoInfo> getVideoList()
-    {
-        return videoList;
-    }
-
-    public int getSize()
-    {
-        return videoList.size();
-    }
-
-    public void setNextUrl(String nextUrl)
-    {
-        if (this.links == null) this.links = new HashMap<>();
-        String oldNext = links.get("next");
-        links.put("next", nextUrl);
-        this.pcs.firePropertyChange("nextUrl", oldNext, links.get("next"));
-    }
-
-    public void setSelfUrl(String selfUrl)
-    {
-        if (this.links == null) this.links = new HashMap<>();
-        String oldSelf = links.get("self");
-        this.links.put("self", selfUrl);
-        this.pcs.firePropertyChange("selfUrl", oldSelf, this.links.get("self"));
-    }
-
-    private void setVideoList(List<TwitchVideoInfo> videoList)
-    {
-        List<TwitchVideoInfo> oldTwitchVideoInfos = this.videoList;
-        this.videoList = videoList;
-        this.pcs.firePropertyChange("videos", oldTwitchVideoInfos, this.videoList);
-    }
-
-    public Map<String, String> getLinks()
-    {
-        return links;
-    }
-
-    public void setLinks(Map<String, String> links)
-    {
-        this.links = links;
+        List<TwitchVideoInfo> oldTwitchVideoInfos = this.videos;
+        this.videos = videos;
+        this.pcs.firePropertyChange("videos", oldTwitchVideoInfos, this.videos);
     }
 
     public void addTwitchVideoInfo(TwitchVideoInfo tvi)
     {
-        if (this.videoList == null) this.videoList = new ArrayList<>();
-        this.videoList.add(tvi);
+        if (this.videos == null) this.videos = new ArrayList<>();
+        this.videos.add(tvi);
         this.pcs.firePropertyChange("twitchVideoInfoAdded", null, tvi);
     }
 
     public void loadMore(List<TwitchVideoInfo> cachedTVIs)
     {
         TwitchVideoInfoList tempVideoInfoList = new TwitchVideoInfoList();
-        try {
-            tempVideoInfoList.update(getNextUrl(), cachedTVIs);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        setNextUrl(tempVideoInfoList.getNextUrlString());
-        for (TwitchVideoInfo videoInfo : tempVideoInfoList.getVideoList()) {
-            addTwitchVideoInfo(videoInfo);
-        }
-        this.pcs.firePropertyChange("moreLoaded", null, videoList);
-
+        //try {
+        //    tempVideoInfoList.update(getNextUrl(), cachedTVIs);
+        //} catch (IOException e) {
+        //    e.printStackTrace();
+        //}
+        //setNextUrl(tempVideoInfoList.getNextUrlString());
+        //for (TwitchVideoInfo videoInfo : tempVideoInfoList.getVideos()) {
+        //    addTwitchVideoInfo(videoInfo);
+        //}
+        this.pcs.firePropertyChange("moreLoaded", null, videos);
     }
 
     public TwitchVideoInfoList getMostRecent(int ageInDays)
     {
         TwitchVideoInfoList mostRecentList = new TwitchVideoInfoList();
 
-        for (TwitchVideoInfo tvi : videoList) {
+        for (TwitchVideoInfo tvi : videos) {
             int age = 0 - ageInDays;
             Calendar dateLimit = Calendar.getInstance();
             dateLimit.add(Calendar.DATE, age);
@@ -322,8 +268,8 @@ public class TwitchVideoInfoList
 
     public void selectMostRecentForDownload(int ageInDays)
     {
-        List<TwitchVideoInfo> mostRecentList = this.getMostRecent(ageInDays).videoList;
-        for (TwitchVideoInfo tvi : this.videoList) {
+        List<TwitchVideoInfo> mostRecentList = this.getMostRecent(ageInDays).videos;
+        for (TwitchVideoInfo tvi : this.videos) {
             if (tvi.getState().equals(SELECTED_FOR_DOWNLOAD)) { //Reset old selection
                 tvi.setState(INITIAL);
             }
@@ -343,7 +289,7 @@ public class TwitchVideoInfoList
     public List<TwitchVideoInfo> getAllSelected()
     {
         List<TwitchVideoInfo> selectedVideos = new ArrayList<>();
-        for (TwitchVideoInfo tvi : videoList) {
+        for (TwitchVideoInfo tvi : videos) {
             if (tvi.getState().equals(SELECTED_FOR_DOWNLOAD)) {
                 selectedVideos.add(tvi);
             }
@@ -353,12 +299,12 @@ public class TwitchVideoInfoList
 
     public TwitchVideoInfo get(int index)
     {
-        return videoList.get(index);
+        return videos.get(index);
     }
 
     public boolean isEmpty()
     {
-        return videoList == null || videoList.size() < 1;
+        return videos == null || videos.size() < 1;
     }
 }
 
