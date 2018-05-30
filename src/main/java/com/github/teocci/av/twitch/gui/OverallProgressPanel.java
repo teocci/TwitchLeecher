@@ -1,6 +1,6 @@
 package com.github.teocci.av.twitch.gui;
 
-import com.github.teocci.av.twitch.model.twitch.TwitchVideoInfo;
+import com.github.teocci.av.twitch.models.twitch.kraken.TwitchVideoInfo;
 import com.github.teocci.av.twitch.worker.FFmpegConverterWorker;
 
 import javax.swing.*;

@@ -1,12 +1,13 @@
-package com.github.teocci.av.twitch.model.twitch;
+package com.github.teocci.av.twitch.models.twitch.kraken;
 
 import com.github.teocci.av.twitch.enums.State;
+import com.github.teocci.av.twitch.utils.LogHelper;
 import com.github.teocci.av.twitch.utils.Network;
+import com.github.teocci.av.twitch.utils.OsUtils;
 import com.google.gson.Gson;
 import com.google.gson.annotations.SerializedName;
+import javafx.scene.image.Image;
 
-import javax.imageio.ImageIO;
-import java.awt.*;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.io.File;
@@ -21,17 +22,14 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * Diese Klasse representiert Ein Video Objekt von der Twitch api
- * https://api.twitch.tv/teocci/videos/a582145870
- * <p>
- * Sie enthaelt Informationen zum PastBroadcast allerdings keine Informationen zu den VideoFiles auf den Twitch Servern
- * <p>
  * Created by teocci.
  *
  * @author teocci@yandex.com on 2018-Apr-26
  */
-public class TwitchVideoInfo extends Observable
+public class TwitchVideo extends Observable
 {
+    private static final String TAG = LogHelper.makeLogTag(TwitchVideo.class);
+
     public static final String API_URL = "https://api.twitch.tv";
 
     public static final String BASIC_TS_FILE = "^(\\d+\\.ts)";
@@ -50,7 +48,7 @@ public class TwitchVideoInfo extends Observable
     @SerializedName("recorded_at")
     private String recordedAt;
     private String game;
-    private double length; //Twitch changed that to double.  
+    private double length; //Twitch changed that to double.
     private HashMap<String, String> preview;
     private String url;
     private int views;
@@ -76,8 +74,7 @@ public class TwitchVideoInfo extends Observable
 
     protected PropertyChangeSupport pcs;
 
-
-    public TwitchVideoInfo()
+    public TwitchVideo()
     {
         this.pcs = new PropertyChangeSupport(this);
         dlInfoNeedsUpdate = false;
@@ -85,12 +82,12 @@ public class TwitchVideoInfo extends Observable
         this.relatedFiles = new HashMap<>();
     }
 
-    public static TwitchVideoInfo getTwitchVideoInfo(String id) throws IOException
+    public static TwitchVideo getTwitchVideoInfo(String id) throws IOException
     {
         URL infoApiUrl = new URL(API_URL + "/kraken/videos/" + id);
         InputStream is = infoApiUrl.openStream();
         InputStreamReader ir = new InputStreamReader(is);
-        TwitchVideoInfo tvi = new Gson().fromJson(ir, TwitchVideoInfo.class);
+        TwitchVideo tvi = new Gson().fromJson(ir, TwitchVideo.class);
         ir.close();
         is.close();
         return tvi;
@@ -115,7 +112,7 @@ public class TwitchVideoInfo extends Observable
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
 
-        TwitchVideoInfo that = (TwitchVideoInfo) o;
+        TwitchVideo that = (TwitchVideo) o;
 
         if (length != that.length) return false;
         if (views != that.views) return false;
@@ -153,19 +150,17 @@ public class TwitchVideoInfo extends Observable
     @Override
     public String toString()
     {
-        return "TwitchVideoInfo{" +
+        return "TwitchVideo{" +
                 "title='" + title + '\'' +
                 '}';
     }
 
     public boolean relatedFileExists()
     {
-        if (relatedFiles.isEmpty()) {
+        if (relatedFiles.isEmpty() || !relatedFiles.containsKey("default")) {
             return false;
         } else {
-            if (relatedFiles.containsKey("default")) {
-                return relatedFiles.get("default").exists();
-            } else return false;
+            return relatedFiles.get("default").exists();
         }
     }
 
@@ -242,7 +237,7 @@ public class TwitchVideoInfo extends Observable
         update(getTwitchVideoInfo(id));
     }
 
-    public void update(TwitchVideoInfo tvi)
+    public void update(TwitchVideo tvi)
     {
         if (this.channel == null) this.channel = new TwitchChannel();
         if (this.links == null) this.links = new HashMap<>();
@@ -294,18 +289,7 @@ public class TwitchVideoInfo extends Observable
 
     public Calendar getRecordedAt()
     {
-        String date = recordedAt.split("T")[0];
-        String time = recordedAt.split("T")[1];
-        int year = new Integer(date.split("-")[0]);
-        int month = new Integer(date.split("-")[1]);
-        int day = new Integer(date.split("-")[2]);
-        int hourOfDay = new Integer(time.split(":")[0]);
-        int minute = new Integer(time.split(":")[1]);
-        int secound = new Integer(time.split(":")[2].substring(0, 2));
-
-        Calendar recordedAtCalendar = GregorianCalendar.getInstance();
-        recordedAtCalendar.set(year, month - 1, day, hourOfDay, minute, secound);
-        return recordedAtCalendar;
+        return OsUtils.convert2Calendar(recordedAt);
     }
 
     public String getGame()
@@ -320,6 +304,7 @@ public class TwitchVideoInfo extends Observable
 
     public URL getPreviewUrl(String key) throws MalformedURLException
     {
+//        LogHelper.e(TAG, "medium image: " + preview.get(key));
         return new URL(preview.get(key));
     }
 
@@ -357,7 +342,7 @@ public class TwitchVideoInfo extends Observable
     public TwitchDownloadInfo getDownloadInfo() throws IOException
     {
         if (id.matches("^v\\d+")) { //VODs with that kind of Id are stored in the new TwitchVodSystem. The old API requests is empty
-            updateDLinfoNewVodSystem();
+            updateDLInfoNewVodSystem();
         } else {
             updateDlInfoOldVodSystem();
         }
@@ -381,7 +366,7 @@ public class TwitchVideoInfo extends Observable
      *
      * @throws IOException
      */
-    private void updateDLinfoNewVodSystem() throws IOException
+    private void updateDLInfoNewVodSystem() throws IOException
     {
         if (this.dlInfo == null || this.dlInfoNeedsUpdate) {
             if (this.dlInfo == null) this.dlInfo = new TwitchDownloadInfo();
@@ -413,7 +398,7 @@ public class TwitchVideoInfo extends Observable
                     System.out.println(line);
                     String quality = line.split("/")[4];
                     playlistUrl = new URL(line);
-                    
+
                     String m3uFilename = new File(playlistUrl.getFile()).getName();
 
                     InputStream playlistIs = playlistUrl.openStream();
@@ -554,9 +539,7 @@ public class TwitchVideoInfo extends Observable
     public Image loadPreviewImage() throws IOException
     {
         if (image == null) {
-            InputStream is = getPreviewUrl("medium").openStream();
-            Image image = ImageIO.read(is);
-            this.image = image;
+            this.image = new Image(getPreviewUrl("medium").toString(), true);
             pcs.firePropertyChange("previewImage", null, image);
             return image;
         } else {
@@ -593,13 +576,13 @@ public class TwitchVideoInfo extends Observable
 
     public LinkedHashMap<String, String> getStreamInformation() throws IOException
     {
-        //LinkedHashMap<String, String> streamInfo = super.getStreamInformation();
+        // LinkedHashMap<String, String> streamInfo = super.getStreamInformation();
         LinkedHashMap<String, String> streamInformation = new LinkedHashMap<>();
         streamInformation.put("Title", getTitle());
         streamInformation.put("Description", getDescription());
         streamInformation.put("Channel", getChannelName());
         streamInformation.put("ChannelDisplayName", getChannelDisplaylName());
-        //streamInformation.put("RecordedAt", getRecordedAt().getDisplayName(Calendar.YEAR, Calendar.SHORT, Locale.ENGLISH));
+        // streamInformation.put("RecordedAt", getRecordedAt().getDisplayName(Calendar.YEAR, Calendar.SHORT, Locale.ENGLISH));
         streamInformation.put("Game", getGame());
         streamInformation.put("BestQuality", getDownloadInfo().getBestAvailableQuality());
         streamInformation.put("broadcastId", getBroadcastId());

@@ -1,4 +1,4 @@
-package com.github.teocci.av.twitch.model.twitch;
+package com.github.teocci.av.twitch.models.twitch.kraken;
 
 import com.github.teocci.av.twitch.utils.Network;
 import com.google.common.base.Joiner;
@@ -246,7 +246,7 @@ public class TwitchVideoInfoList
         //}
         //setNextUrl(tempVideoInfoList.getNextUrlString());
         //for (TwitchVideoInfo videoInfo : tempVideoInfoList.getVideos()) {
-        //    addTwitchVideoInfo(videoInfo);
+        //    addTwitchVideo(videoInfo);
         //}
         this.pcs.firePropertyChange("moreLoaded", null, videos);
     }

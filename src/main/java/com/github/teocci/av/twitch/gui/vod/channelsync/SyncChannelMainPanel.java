@@ -4,8 +4,8 @@ import com.github.teocci.av.twitch.controllers.ChannelSyncController;
 import com.github.teocci.av.twitch.interfaces.ChannelSyncControllerInterface;
 import com.github.teocci.av.twitch.gui.OverallProgressPanel;
 import com.github.teocci.av.twitch.gui.VideoInfoPanel;
-import com.github.teocci.av.twitch.model.twitch.TwitchVideoInfo;
-import com.github.teocci.av.twitch.model.twitch.TwitchVideoInfoList;
+import com.github.teocci.av.twitch.models.twitch.kraken.TwitchVideoInfo;
+import com.github.teocci.av.twitch.models.twitch.kraken.TwitchVideoInfoList;
 import com.github.teocci.av.twitch.utils.WrapLayout;
 
 import javax.swing.*;

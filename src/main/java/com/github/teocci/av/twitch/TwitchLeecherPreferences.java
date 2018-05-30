@@ -16,9 +16,10 @@ public class TwitchLeecherPreferences
     private static Preferences prefs;
     private static List<String> qualities;
 
-    public static final String KEY_BASE_DIR = "baseDir";
-    public static final String KEY_DESTINATION_DIR = "destinationDir";
-    public static final String KEY_FILENAME_PATTERN = "filenamePattern";
+    public static final String KEY_APP_BASE_PATH = "app_base_path";
+    public static final String KEY_DOWNLOAD_PATH = "download_path";
+
+    public static final String KEY_FILENAME_PATTERN = "filename_pattern";
 
     private TwitchLeecherPreferences() {}
 

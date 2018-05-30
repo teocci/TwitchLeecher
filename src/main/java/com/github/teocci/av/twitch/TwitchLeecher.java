@@ -1,46 +1,35 @@
 package com.github.teocci.av.twitch;
 
+import com.github.teocci.av.twitch.controllers.MainController;
 import javafx.application.Application;
-import javafx.application.Platform;
 import javafx.scene.Scene;
-import javafx.scene.control.*;
-import javafx.scene.layout.VBox;
+import javafx.scene.image.Image;
 import javafx.stage.Stage;
+
+import static com.github.teocci.av.twitch.utils.Config.IMAGE_ICON;
 
 /**
  * Created by teocci.
  *
  * @author teocci@yandex.com on 2018-Apr-26
  */
-public class TwitchLeecher extends Application {
-
-    public static void main(String[] args) {
+public class TwitchLeecher extends Application
+{
+    public static void main(String[] args)
+    {
         launch(args);
     }
 
     @Override
-    public void start(Stage primaryStage) {
+    public void start(Stage primaryStage)
+    {
         primaryStage.setTitle("Twitch Leecher");
 
-        MenuBar menuBar = new MenuBar();
-        Menu fileMenu = new Menu("File");
-        MenuItem settingMenuItem = new MenuItem("Settings");
-        MenuItem logMenuItem = new MenuItem("Log");
-        MenuItem exitMenuItem = new MenuItem("Exit");
-        exitMenuItem.setOnAction(actionEvent -> Platform.exit());
+        MainController controller = new MainController();
+        Scene scene = new Scene(controller.getViewAsParent(), 1030, 600);
+        scene.getStylesheets().add("css/style.css");
 
-        fileMenu.getItems().addAll(settingMenuItem, logMenuItem, new SeparatorMenuItem(), exitMenuItem);
-
-        Menu helpMenu = new Menu("Help");
-        MenuItem aboutMenuItem = new MenuItem("About");
-        helpMenu.getItems().add(aboutMenuItem);
-
-        menuBar.getMenus().addAll(fileMenu, helpMenu);
-
-        VBox vBox = new VBox(menuBar);
-
-        Scene scene = new Scene(vBox, 960, 600);
-
+        primaryStage.getIcons().add(new Image(IMAGE_ICON));
         primaryStage.setScene(scene);
         primaryStage.show();
     }

@@ -1,4 +1,4 @@
-package com.github.teocci.av.twitch.model.twitch;
+package com.github.teocci.av.twitch.models.twitch.helix;
 
 import com.github.teocci.av.twitch.enums.State;
 import com.google.gson.Gson;

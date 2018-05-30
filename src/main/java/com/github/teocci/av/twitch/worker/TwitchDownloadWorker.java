@@ -1,7 +1,7 @@
 package com.github.teocci.av.twitch.worker;
 
 import com.github.teocci.av.twitch.exceptions.TwitchDownloadException;
-import com.github.teocci.av.twitch.model.twitch.TwitchVideoPart;
+import com.github.teocci.av.twitch.models.twitch.kraken.TwitchVideoPart;
 
 import javax.swing.*;
 import java.io.File;

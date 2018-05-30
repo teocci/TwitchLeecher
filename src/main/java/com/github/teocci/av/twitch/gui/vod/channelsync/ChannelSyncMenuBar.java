@@ -51,11 +51,11 @@ public class ChannelSyncMenuBar extends JMenuBar implements ActionListener
             super(owner, "Select Destination Folder");
             JLabel destinationFolderLbl = new JLabel("Destination Folder:");
             final JTextField destinationFolderTextField = new JTextField();
-            destinationFolderTextField.setText(prefs.get(TwitchLeecherPreferences.KEY_DESTINATION_DIR, ""));
+            destinationFolderTextField.setText(prefs.get(TwitchLeecherPreferences.KEY_DOWNLOAD_PATH, ""));
 
             JButton selectFolderBtn = new JButton("...");
             selectFolderBtn.addActionListener(e -> {
-                String currentDestinationDirectory = prefs.get(TwitchLeecherPreferences.KEY_DESTINATION_DIR, OsUtils.getUserHome());
+                String currentDestinationDirectory = prefs.get(TwitchLeecherPreferences.KEY_DOWNLOAD_PATH, OsUtils.getUserHome());
                 File destinationDirectory = showDestinationDirChooser(currentDestinationDirectory);
                 destinationFolderTextField.setText(destinationDirectory.getPath());
             });
@@ -68,7 +68,7 @@ public class ChannelSyncMenuBar extends JMenuBar implements ActionListener
 
             JButton okBtn = new JButton("OK");
             okBtn.addActionListener(e -> {
-                prefs.put(TwitchLeecherPreferences.KEY_DESTINATION_DIR, destinationFolderTextField.getText());
+                prefs.put(TwitchLeecherPreferences.KEY_DOWNLOAD_PATH, destinationFolderTextField.getText());
                 settingsFolderDialog.setVisible(false);
             });
 

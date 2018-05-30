@@ -1,4 +1,4 @@
-package com.github.teocci.av.twitch.model;
+package com.github.teocci.av.twitch.models;
 
 import java.util.List;
 import java.util.Vector;

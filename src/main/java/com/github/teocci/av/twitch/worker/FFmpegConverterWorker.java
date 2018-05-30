@@ -1,7 +1,7 @@
 package com.github.teocci.av.twitch.worker;
 
 import com.github.teocci.av.twitch.gui.OverallProgressPanel;
-import com.github.teocci.av.twitch.model.twitch.TwitchVideoInfo;
+import com.github.teocci.av.twitch.models.twitch.kraken.TwitchVideoInfo;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;

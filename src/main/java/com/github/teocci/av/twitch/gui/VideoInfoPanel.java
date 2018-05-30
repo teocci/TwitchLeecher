@@ -2,7 +2,7 @@ package com.github.teocci.av.twitch.gui;
 
 import com.github.teocci.av.twitch.interfaces.ChannelSyncControllerInterface;
 import com.github.teocci.av.twitch.enums.State;
-import com.github.teocci.av.twitch.model.twitch.TwitchVideoInfo;
+import com.github.teocci.av.twitch.models.twitch.kraken.TwitchVideoInfo;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -52,7 +52,7 @@ public class VideoInfoPanel extends JPanel implements ItemListener, PropertyChan
     private final JLabel linkToTwitchLbl;
     private final JLabel dateLbl;
     private final JLayeredPane previewImageLayeredPane;
-    private final JLabel darkBarkLbl;
+    private final JLabel darkBarkLbl = new JLabel();
 
 
     // Borders
@@ -90,7 +90,6 @@ public class VideoInfoPanel extends JPanel implements ItemListener, PropertyChan
         viewCountLbl = new JLabel(String.format("%d views", relatedTwitchVideoInfoObject.getViews()));
         viewCountLbl.setForeground(Color.WHITE);
         viewCountLbl.setBackground(new Color(0, 0, 0, 0));
-        darkBarkLbl = new JLabel();
         original = viewCountLbl.getFont();
         viewCountLbl.setFont(original.deriveFont(Font.BOLD));
 

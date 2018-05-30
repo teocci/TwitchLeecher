@@ -1,6 +1,6 @@
 package com.github.teocci.av.twitch.exceptions;
 
-import com.github.teocci.av.twitch.model.twitch.TwitchVideoPart;
+import com.github.teocci.av.twitch.models.twitch.kraken.TwitchVideoPart;
 
 /**
  * Created by teocci.

@@ -1,4 +1,4 @@
-package com.github.teocci.av.twitch.model.twitch;
+package com.github.teocci.av.twitch.models.twitch.kraken;
 
 import com.github.teocci.av.twitch.utils.Network;
 import com.google.gson.Gson;
@@ -7,7 +7,6 @@ import com.google.gson.JsonObject;
 import com.google.gson.annotations.SerializedName;
 
 import java.io.IOException;
-import java.net.URL;
 import java.util.HashMap;
 
 /**

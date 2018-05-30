@@ -5,7 +5,9 @@ import com.github.teocci.av.twitch.interfaces.ChannelSyncControllerInterface;
 import com.github.teocci.av.twitch.gui.vod.channelsync.ChannelSyncLogFrame;
 import com.github.teocci.av.twitch.gui.vod.channelsync.ChannelSyncMenuBar;
 import com.github.teocci.av.twitch.gui.vod.channelsync.SyncChannelMainPanel;
-import com.github.teocci.av.twitch.model.twitch.*;
+import com.github.teocci.av.twitch.models.twitch.kraken.TwitchVideoInfo;
+import com.github.teocci.av.twitch.models.twitch.kraken.TwitchVideoInfoList;
+import com.github.teocci.av.twitch.models.twitch.kraken.TwitchVideoPart;
 import com.github.teocci.av.twitch.utils.OsUtils;
 import com.github.teocci.av.twitch.utils.OsValidator;
 import com.github.teocci.av.twitch.TwitchLeecherPreferences;
@@ -31,11 +33,11 @@ import java.util.List;
 import java.util.concurrent.*;
 import java.util.regex.Pattern;
 
-import static com.github.teocci.av.twitch.TwitchLeecherPreferences.KEY_BASE_DIR;
+import static com.github.teocci.av.twitch.TwitchLeecherPreferences.KEY_APP_BASE_PATH;
 import static com.github.teocci.av.twitch.enums.State.*;
 import static com.github.teocci.av.twitch.enums.WorkerState.DONE;
 import static com.github.teocci.av.twitch.enums.WorkerState.STARTED;
-import static com.github.teocci.av.twitch.TwitchLeecherPreferences.KEY_DESTINATION_DIR;
+import static com.github.teocci.av.twitch.TwitchLeecherPreferences.KEY_DOWNLOAD_PATH;
 import static com.github.teocci.av.twitch.utils.Config.*;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static javax.swing.JOptionPane.ERROR_MESSAGE;
@@ -68,8 +70,8 @@ public class ChannelSyncController implements ChannelSyncControllerInterface {
 
     private TwitchVideoInfo videoInfo, convertingVideoInfo;
 
-    private String baseDirPath = TwitchLeecherPreferences.getInstance().get(KEY_BASE_DIR, OsUtils.getUserHome());
-    private String destinationDirPath = TwitchLeecherPreferences.getInstance().get(KEY_DESTINATION_DIR, baseDirPath + APP_DIR);
+    private String baseDirPath = TwitchLeecherPreferences.getInstance().get(KEY_APP_BASE_PATH, OsUtils.getUserHome());
+    private String destinationDirPath = TwitchLeecherPreferences.getInstance().get(KEY_DOWNLOAD_PATH, baseDirPath + APP_DIR);
     private String playlistFolderPath = destinationDirPath + PLAYLIST_DIR;
 
     private File playlist;
@@ -289,15 +291,8 @@ public class ChannelSyncController implements ChannelSyncControllerInterface {
     }
 
     private void initAppConfig() {
-        File destinationFile = checkDir(destinationDirPath);
-        if (destinationFile == null || !destinationFile.exists()) {
-            if (destinationFile != null && !destinationFile.mkdir()) {
-                System.out.println("destinationFile was not created.");
-            }
-        }
-
-        System.out.println("destinationFile exists.");
-        playlistFolderPath = TwitchLeecherPreferences.getInstance().get(KEY_DESTINATION_DIR, OsUtils.getUserHome()) + PLAYLIST_DIR;
+        OsUtils.checkDir(destinationDirPath);
+        playlistFolderPath = TwitchLeecherPreferences.getInstance().get(KEY_DOWNLOAD_PATH, OsUtils.getUserHome()) + PLAYLIST_DIR;
     }
 
     private void initFFmpegConfig() {
@@ -475,7 +470,7 @@ public class ChannelSyncController implements ChannelSyncControllerInterface {
 //
 //        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd_HHmm");
 //        String dateTimeStr = sdf.format(videoInfo.getRecordedAt().getTime());
-//        String destinationDir = TwitchLeecherPreferences.getInstance().get(KEY_DESTINATION_DIR, OsUtils.getUserHome());
+//        String destinationDir = TwitchLeecherPreferences.getInstance().get(KEY_DOWNLOAD_PATH, OsUtils.getUserHome());
 //        File destinationFilenameTemplate = new File(destinationDir + "/" +
 //                OsUtils.getValidFilename(videoInfo.getChannelName()) + "/" +
 //                OsUtils.getValidFilename(videoInfo.getTitle()) + "_" +

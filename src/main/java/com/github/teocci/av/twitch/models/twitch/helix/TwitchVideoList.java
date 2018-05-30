@@ -1,5 +1,6 @@
-package com.github.teocci.av.twitch.model.twitch;
+package com.github.teocci.av.twitch.models.twitch.helix;
 
+import com.github.teocci.av.twitch.models.twitch.kraken.TwitchVideoInfo;
 import com.google.common.base.Joiner;
 import com.google.gson.Gson;
 import com.google.gson.annotations.SerializedName;

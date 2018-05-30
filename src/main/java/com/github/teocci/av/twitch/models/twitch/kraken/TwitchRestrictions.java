@@ -1,4 +1,4 @@
-package com.github.teocci.av.twitch.model.twitch;
+package com.github.teocci.av.twitch.models.twitch.kraken;
 
 /**
  * Created by teocci.

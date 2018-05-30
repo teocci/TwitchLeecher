@@ -1,4 +1,4 @@
-package com.github.teocci.av.twitch.model.twitch;
+package com.github.teocci.av.twitch.models.twitch.helix;
 
 import com.google.gson.Gson;
 import com.google.gson.annotations.SerializedName;

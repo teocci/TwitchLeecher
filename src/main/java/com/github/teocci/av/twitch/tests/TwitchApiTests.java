@@ -1,8 +1,8 @@
 package com.github.teocci.av.twitch.tests;
 
-import com.github.teocci.av.twitch.model.twitch.TwitchChannel;
-import com.github.teocci.av.twitch.model.twitch.TwitchStream;
-import com.github.teocci.av.twitch.model.twitch.TwitchVideoInfo;
+import com.github.teocci.av.twitch.models.twitch.kraken.TwitchChannel;
+import com.github.teocci.av.twitch.models.twitch.kraken.TwitchStream;
+import com.github.teocci.av.twitch.models.twitch.kraken.TwitchVideoInfo;
 import org.junit.Test;
 
 import java.io.IOException;

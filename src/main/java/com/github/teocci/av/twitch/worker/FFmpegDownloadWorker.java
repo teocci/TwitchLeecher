@@ -1,7 +1,7 @@
 package com.github.teocci.av.twitch.worker;
 
 import com.github.teocci.av.twitch.gui.OverallProgressPanel;
-import com.github.teocci.av.twitch.model.twitch.TwitchVideoInfo;
+import com.github.teocci.av.twitch.models.twitch.kraken.TwitchVideoInfo;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -13,7 +13,6 @@ import java.util.Scanner;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static com.github.teocci.av.twitch.enums.State.CONVERTED;
 import static com.github.teocci.av.twitch.enums.State.DOWNLOADED;
 import static com.github.teocci.av.twitch.enums.State.DOWNLOADING;
 import static com.github.teocci.av.twitch.enums.WorkerState.DONE;
