@@ -1,5 +1,7 @@
 package com.github.teocci.av.twitch.utils;
 
+import com.github.teocci.av.twitch.TwitchLeecher;
+import com.github.teocci.av.twitch.TwitchVodLeecher;
 import com.github.teocci.av.twitch.exceptions.UnsupportedOsException;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -7,6 +9,11 @@ import com.google.gson.GsonBuilder;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.Writer;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.security.CodeSource;
+import java.security.ProtectionDomain;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
 
@@ -24,6 +31,9 @@ public class OsUtils
     private static final String PATTERN_VALID_FILE = "[^a-zA-Z0-9\\.\\-\\\\_ ]";
     private static final String PATTERN_FILE_EXT = "\\?.*$";
 
+    private static final int ARCH_64 = 1;
+    private static final int ARCH_32 = 2;
+
     public static String getUserHome()
     {
         if (OsValidator.isWindows()) {
@@ -40,6 +50,14 @@ public class OsUtils
             }
         }
         return null;
+    }
+
+    public static int getSystemArch()
+    {
+        String arch = System.getenv("PROCESSOR_ARCHITECTURE");
+        String wow64Arch = System.getenv("PROCESSOR_ARCHITEW6432");
+
+        return arch.endsWith("64") || wow64Arch != null && wow64Arch.endsWith("64") ? ARCH_64 : ARCH_32;
     }
 
     public static String getValidFilename(String filename)
@@ -89,6 +107,11 @@ public class OsUtils
         return recordedAtCalendar;
     }
 
+    public static URI getJarURI(ProtectionDomain domain) throws URISyntaxException
+    {
+        return domain.getCodeSource().getLocation().toURI();
+    }
+
     public static File getDirAsFile(String dirPath)
     {
         File dirFile = new File(dirPath);
@@ -109,5 +132,20 @@ public class OsUtils
 
         LogHelper.e(TAG, "destinationFile exists.");
         return true;
+    }
+
+    public static String getFFmpegPath(ProtectionDomain domain) throws URISyntaxException
+    {
+        return new File(getJarURI(domain)).getParent().concat("/ffmpeg.exe");
+    }
+
+    public static boolean is64Arch()
+    {
+        return getSystemArch() == ARCH_64;
+    }
+
+    public static boolean is32Arch()
+    {
+        return getSystemArch() == ARCH_32;
     }
 }

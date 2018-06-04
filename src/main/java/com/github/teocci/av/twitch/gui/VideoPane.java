@@ -1,8 +1,7 @@
-package com.github.teocci.av.twitch.views;
+package com.github.teocci.av.twitch.gui;
 
 import com.github.teocci.av.twitch.controllers.VideoViewController;
 import com.github.teocci.av.twitch.enums.State;
-import com.github.teocci.av.twitch.gui.VideoInfoPreferencesDialog;
 import com.github.teocci.av.twitch.models.twitch.kraken.TwitchVideo;
 import com.github.teocci.av.twitch.utils.LogHelper;
 import javafx.event.ActionEvent;
@@ -29,7 +28,6 @@ import static com.github.teocci.av.twitch.enums.State.INITIAL;
 import static com.github.teocci.av.twitch.enums.State.SELECTED_FOR_DOWNLOAD;
 import static javafx.scene.control.Alert.AlertType.CONFIRMATION;
 import static javafx.scene.layout.BorderStrokeStyle.SOLID;
-import static javafx.scene.text.TextAlignment.RIGHT;
 
 /**
  * Represents one TwitchVideoInfo Object in the Search Result Area in th GUI.
@@ -41,6 +39,7 @@ import static javafx.scene.text.TextAlignment.RIGHT;
 public class VideoPane extends Pane implements /*ItemListener,*/ PropertyChangeListener
 {
     private static final String TAG = LogHelper.makeLogTag(VideoPane.class);
+
     // Borders
     private static int BORDER_SIZE = 5;
     private static int SPACING_SIZE = 2;
@@ -67,13 +66,12 @@ public class VideoPane extends Pane implements /*ItemListener,*/ PropertyChangeL
     private final Label channelName = new Label();
     private final Label recordedDate = new Label();
 
-    //        btnBox = new Panel(new FlowLayout(FlowLayout.RIGHT, 2, 0));
-
     private final Hyperlink twitchLink = new Hyperlink("Watch on Twitch");
 
     private final HBox bottomBox = new HBox(SPACING_SIZE);
     private final CheckBox queued = new CheckBox("Add to queue");
 
+//    private final btnBox = new Panel(new FlowLayout(FlowLayout.RIGHT, 2, 0));
     private final HBox btnBox = new HBox(SPACING_SIZE);
     private final Button downloadBtn = new Button("Download");
     private final Button playBtn = new Button("Play");

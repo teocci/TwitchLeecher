@@ -1,16 +1,15 @@
 package com.github.teocci.av.twitch.views;
 
 import com.github.teocci.av.twitch.controllers.ChannelSearchController;
+import com.github.teocci.av.twitch.gui.WorkIndicatorDialog;
+import javafx.application.Platform;
 import javafx.geometry.Insets;
-import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.control.Button;
 import javafx.scene.control.ScrollPane;
-import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.TilePane;
-import javafx.scene.layout.VBox;
 
 /**
  * Created by teocci.
@@ -31,11 +30,11 @@ public class ChannelSearchView
     {
         this.controller = controller;
 
-        initUI();
+        initUIElements();
         initEventHandlers();
     }
 
-    private void initUI()
+    private void initUIElements()
     {
         tile.setPadding(new Insets(5));
         tile.setId("content-tile");

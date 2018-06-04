@@ -192,8 +192,7 @@ public class ChannelSyncController implements ChannelSyncControllerInterface {
         }
 
 //        progressFrame.setVisible(true); //Is displayed in the main window now
-
-        //        initializeDownload();
+//        initializeDownload();
         initFFmpegVideoDownloader();
     }
 
@@ -298,7 +297,7 @@ public class ChannelSyncController implements ChannelSyncControllerInterface {
     private void initFFmpegConfig() {
         try {
             if (OsValidator.isWindows()) {
-                ffmpegExecutable = new File(new File(getJarURI().getPath()).getParent().concat("/ffmpeg.exe"));
+                ffmpegExecutable = new File(OsUtils.getFFmpegPath(TwitchVodLeecher.class.getProtectionDomain()));
                 if (!ffmpegExecutable.exists()) {
                     int choice = JOptionPane.showConfirmDialog(
                             mainFrame,
@@ -653,20 +652,6 @@ public class ChannelSyncController implements ChannelSyncControllerInterface {
                     .append(System.getProperty("line.separator"));
         }
         fileWriter.close();
-    }
-
-    private URI getJarURI() throws URISyntaxException {
-        final ProtectionDomain domain;
-        final CodeSource source;
-        final URL url;
-        final URI uri;
-
-        domain = TwitchVodLeecher.class.getProtectionDomain();
-        source = domain.getCodeSource();
-        url = source.getLocation();
-        uri = url.toURI();
-
-        return (uri);
     }
 
     private String recommendedFFmpegOptions(TwitchVideoInfo tvi) throws MalformedURLException {

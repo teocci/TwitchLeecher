@@ -1,6 +1,7 @@
 package com.github.teocci.av.twitch.views;
 
 import com.github.teocci.av.twitch.controllers.VideoViewController;
+import com.github.teocci.av.twitch.gui.VideoPane;
 import com.github.teocci.av.twitch.models.twitch.kraken.TwitchVideo;
 import javafx.scene.layout.Pane;
 

@@ -29,4 +29,8 @@ public class Config
 
 
     public static final String PREFERENCES_FILE = APP_BASE_PATH + "preferences.json";
+
+    public static final String URL_FFMPEG_BASE = "https://raw.githubusercontent.com/teocci/FFmpegBuilds/master";
+    public static final String URL_FFMPEG_32_EXE = URL_FFMPEG_BASE + "/win32-static/bin/ffmpeg.exe";
+    public static final String URL_FFMPEG_64_EXE = URL_FFMPEG_BASE + "/win64-static/bin/ffmpeg.exe";
 }

@@ -158,18 +158,19 @@ public class VideoListManager
     {
         String data = Network.getJSON(requestURL);
         JsonObject p = new Gson().fromJson(data, JsonObject.class);
-        System.out.println(p);
+//        LogHelper.e(TAG, p);
 
         if (p == null) return;
         if (p.has("videos") && !(p.get("videos") instanceof JsonNull)) {
-            System.out.println("Has videos: " + p.has("videos"));
+//            LogHelper.e(TAG, "Has videos: " + p.has("videos"));
 
-            List<TwitchVideo> videos = new Gson().fromJson(p.getAsJsonArray("videos"), new TypeToken<List<TwitchVideo>>() {}.getType());
-            System.out.println(videos);
+//            List<TwitchVideo> videos = new Gson().fromJson(p.getAsJsonArray("videos"), new TypeToken<List<TwitchVideo>>() {}.getType());
+//            LogHelper.e(TAG, videos);
+            twitchVideoList = new Gson().fromJson(p, TwitchVideoList.class); //deserialize
+            LogHelper.e(TAG, twitchVideoList);
+            if (twitchVideoList.getTotal() < 1) throw new IOException("Channel does not have videos.");
 
             synchronized (lock) {
-                twitchVideoList = new Gson().fromJson(p, TwitchVideoList.class); //deserialize
-                System.out.println(twitchVideoList);
                 addTwitchVideoList();
             }
             searchController.onResult();
