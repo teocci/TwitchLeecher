@@ -2,7 +2,7 @@ package com.github.teocci.av.twitch;
 
 import com.github.teocci.av.twitch.models.twitch.kraken.TwitchVideoPart;
 import com.github.teocci.av.twitch.models.twitch.kraken.TwitchVideoInfo;
-import com.github.teocci.av.twitch.utils.OsUtils;
+import com.github.teocci.av.twitch.utils.Utils;
 
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -20,7 +20,7 @@ import static com.github.teocci.av.twitch.utils.Config.STREAM_DIR;
  */
 public class TwitchLeecherCmd
 {
-    private static final String destinationDir = OsUtils.getUserHome() + STREAM_DIR;
+    private static final String destinationDir = Utils.getUserHome() + STREAM_DIR;
 
     public static void main(String[] argv) throws IOException
     {

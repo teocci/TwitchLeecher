@@ -3,8 +3,9 @@ package com.github.teocci.av.twitch.controllers;
 import com.github.teocci.av.twitch.TwitchLeecherPreferences;
 import com.github.teocci.av.twitch.enums.BroadcastType;
 import com.github.teocci.av.twitch.managers.FFmpegManager;
+import com.github.teocci.av.twitch.models.twitch.kraken.TwitchVideo;
 import com.github.teocci.av.twitch.utils.LogHelper;
-import com.github.teocci.av.twitch.utils.OsUtils;
+import com.github.teocci.av.twitch.utils.Utils;
 import com.github.teocci.av.twitch.views.MainView;
 import javafx.scene.Node;
 import javafx.scene.Parent;
@@ -34,6 +35,7 @@ public class MainController
 
     private String basePath = TwitchLeecherPreferences.getInstance().get(KEY_APP_BASE_PATH, APP_BASE_PATH);
     private String downloadPath = TwitchLeecherPreferences.getInstance().get(KEY_DOWNLOAD_PATH, DOWNLOAD_PATH);
+
     private Scene scene;
 
     private FFmpegManager ffmpegManager;
@@ -49,7 +51,7 @@ public class MainController
 
     private void initPreferences()
     {
-        if (!OsUtils.checkDir(basePath) || !OsUtils.checkDir(downloadPath)) {
+        if (!Utils.checkDir(basePath) || !Utils.checkDir(downloadPath)) {
             LogHelper.e(TAG, "Base or Download directories do not exist");
         }
 
@@ -63,6 +65,11 @@ public class MainController
     {
         LogHelper.e(TAG, "keyword: " + keyword + " | broadcastType: " + broadcastType);
         searchController.searchChannel(keyword, broadcastType);
+    }
+
+    public void downloadTwitchVideo(TwitchVideo video)
+    {
+        ffmpegManager.downloadTwitchVideo(video);
     }
 
     public MainView getView()
@@ -105,7 +112,7 @@ public class MainController
         view.showLoader(visible);
     }
 
-    private void showTempBar(boolean visible)
+    public void showTempBar(boolean visible)
     {
         view.showTempBar(visible);
     }

@@ -1,12 +1,14 @@
 package com.github.teocci.av.twitch.controllers;
 
 import com.github.teocci.av.twitch.models.twitch.kraken.TwitchVideo;
+import com.github.teocci.av.twitch.utils.Utils;
 import com.github.teocci.av.twitch.views.VideoView;
 import javafx.scene.layout.Pane;
 
 import java.io.IOException;
 import java.net.URL;
 
+import static com.github.teocci.av.twitch.enums.State.INITIAL;
 import static com.github.teocci.av.twitch.enums.State.QUEUED_FOR_DOWNLOAD;
 
 /**
@@ -17,12 +19,14 @@ import static com.github.teocci.av.twitch.enums.State.QUEUED_FOR_DOWNLOAD;
 public class VideoViewController
 {
     private VideoView view;
+    private ChannelSearchController controller;
 
     private TwitchVideo video;
 
-    public VideoViewController(TwitchVideo video)
+    public VideoViewController(ChannelSearchController controller, TwitchVideo video)
     {
         this.video = video;
+        this.controller = controller;
         try {
             view = new VideoView(video, this);
         } catch (IOException e) {
@@ -40,12 +44,17 @@ public class VideoViewController
 
     public void downloadTwitchVideo(TwitchVideo video)
     {
-        video.setState(QUEUED_FOR_DOWNLOAD);
+        controller.getMainController().downloadTwitchVideo(video);
     }
 
     public void openUrlInBrowser(URL url)
     {
-
+//        try {
+            Utils.open(url.toString());
+//            Runtime.getRuntime().exec("gvfs-open " + url);
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
     }
 
     public void convert2mp4(TwitchVideo video)
@@ -55,7 +64,8 @@ public class VideoViewController
 
     public void delete(TwitchVideo video)
     {
-
+        video.deleteAllRelatedFiles();
+        video.setState(INITIAL);
     }
 
     public VideoView getView()

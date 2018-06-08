@@ -134,10 +134,10 @@ public class ChannelSearchController implements ChannelSearchCallback
             @Override
             protected Object call() throws Exception
             {
-                Platform.runLater(() -> {
-                    view.clear();
-                    getMainController().initSearch();
-                });
+//                Platform.runLater(() -> {
+//                    view.clear();
+//                    getMainController().initSearch();
+//                });
 
                 videoListManager.loadMore();
                 return true;

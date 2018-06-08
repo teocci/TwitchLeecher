@@ -3,7 +3,7 @@ package com.github.teocci.av.twitch.models.twitch.kraken;
 import com.github.teocci.av.twitch.enums.State;
 import com.github.teocci.av.twitch.utils.LogHelper;
 import com.github.teocci.av.twitch.utils.Network;
-import com.github.teocci.av.twitch.utils.OsUtils;
+import com.github.teocci.av.twitch.utils.Utils;
 import com.google.gson.Gson;
 import com.google.gson.annotations.SerializedName;
 import javafx.scene.image.Image;
@@ -289,7 +289,7 @@ public class TwitchVideo extends Observable
 
     public Calendar getRecordedAt()
     {
-        return OsUtils.convert2Calendar(recordedAt);
+        return Utils.convert2Calendar(recordedAt);
     }
 
     public String getGame()

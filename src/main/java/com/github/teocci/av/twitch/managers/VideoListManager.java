@@ -7,6 +7,7 @@ import com.github.teocci.av.twitch.models.twitch.kraken.TwitchVideo;
 import com.github.teocci.av.twitch.models.twitch.kraken.TwitchVideoList;
 import com.github.teocci.av.twitch.utils.LogHelper;
 import com.github.teocci.av.twitch.utils.Network;
+import com.github.teocci.av.twitch.utils.Utils;
 import com.google.common.base.Joiner;
 import com.google.gson.Gson;
 import com.google.gson.JsonNull;
@@ -16,11 +17,17 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.scene.layout.Pane;
 
-import java.io.IOException;
+import java.io.*;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+
+import static com.github.teocci.av.twitch.enums.State.CONVERTED;
+import static com.github.teocci.av.twitch.enums.State.DOWNLOADED;
+import static com.github.teocci.av.twitch.enums.State.INITIAL;
+import static com.github.teocci.av.twitch.utils.Config.PLAYLIST_PATH;
 
 /**
  * Created by teocci.
@@ -193,7 +200,8 @@ public class VideoListManager
     {
         synchronized (lock) {
             for (TwitchVideo video : twitchVideoList.getVideos()) {
-                VideoViewController controller = new VideoViewController(video);
+                VideoViewController controller = new VideoViewController(searchController, video);
+                searchLocalFiles(video);
                 add(video.getId(), controller);
             }
 
@@ -230,6 +238,54 @@ public class VideoListManager
                 " offset = " + offset
         );
         return videos != null && videos.size() < twitchVideoList.getTotal();
+    }
+
+
+    /**
+     * Updates the State of a new TwitchVideoInfoObjects based on the Stored Videos
+     *
+     * @param video the Twitch Video Info Object that should be modified
+     */
+    private void searchLocalFiles(TwitchVideo video)
+    {
+        if (video.getState().equals(INITIAL)) {
+            File playlist = new File(PLAYLIST_PATH + video.getId() + ".m3u");
+            if (playlist.exists() && playlist.isFile() && playlist.canRead()) {
+                video.setMainRelatedFileOnDisk(playlist);
+                video.putRelatedFile("playlist", playlist);
+                try {
+                    InputStream is = new FileInputStream(playlist);
+                    Scanner sc = new Scanner(is);
+                    int i = 0;
+                    while (sc.hasNextLine()) {
+                        String line = sc.nextLine();
+                        File file = new File(line);
+                        if (file.exists()) {
+                            i++;
+                            String key = String.format("playlist_item_%04d", i);
+                            video.putRelatedFile(key, file);
+                        }
+                    }
+                } catch (FileNotFoundException e) {
+                    e.printStackTrace();
+                }
+                video.setState(DOWNLOADED);
+            }
+
+//            ffmpegFileListFile = new File(playlistFolderPath + video.getId() + ".ffmpeglist");
+//            if (ffmpegFileListFile.exists()) {
+//                video.putRelatedFile("ffmpegFileListFile", ffmpegFileListFile);
+//            }
+
+            File mp4Video = Utils.getVideoFile(video, true);
+            if (mp4Video == null) return;
+
+            if (mp4Video.exists() && mp4Video.isFile() && mp4Video.canRead()) {
+                video.setMainRelatedFileOnDisk(mp4Video);
+                video.putRelatedFile("mp4Video", mp4Video);
+                video.setState(CONVERTED);
+            }
+        }
     }
 
 

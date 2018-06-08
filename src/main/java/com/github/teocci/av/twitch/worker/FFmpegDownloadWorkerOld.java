@@ -1,12 +1,8 @@
 package com.github.teocci.av.twitch.worker;
 
-import com.github.teocci.av.twitch.enums.WorkerState;
 import com.github.teocci.av.twitch.gui.OverallProgressPanel;
-import com.github.teocci.av.twitch.managers.FFmpegManager;
-import com.github.teocci.av.twitch.models.twitch.kraken.TwitchVideo;
-import com.github.teocci.av.twitch.utils.LogHelper;
+import com.github.teocci.av.twitch.models.twitch.kraken.TwitchVideoInfo;
 import com.github.teocci.av.twitch.utils.Utils;
-import javafx.concurrent.Task;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -28,10 +24,8 @@ import static com.github.teocci.av.twitch.enums.WorkerState.STARTED;
  *
  * @author teocci@yandex.com on 2018-Apr-26
  */
-public class FFmpegDownloadWorker extends Task<WorkerState>
+public class FFmpegDownloadWorkerOld implements Runnable
 {
-    private static final String TAG = LogHelper.makeLogTag(FFmpegDownloadWorker.class);
-
     private final String TIME_PATTERN = "time=\\d{2,}:\\d{2}:\\d{2}";
     private final String PREFIX = "[FFMPEG] ";
 
@@ -43,9 +37,11 @@ public class FFmpegDownloadWorker extends Task<WorkerState>
     private String outputLine;
     private int videoLength;
 
-    private TwitchVideo videoInfo;
+    private final List<PropertyChangeListener> callbacks = new ArrayList<>();
 
-    public FFmpegDownloadWorker(File destinationVideoFile, TwitchVideo videoInfo, String ffmpegCommand)
+    private TwitchVideoInfo videoInfo;
+
+    public FFmpegDownloadWorkerOld(File destinationVideoFile, TwitchVideoInfo videoInfo, String ffmpegCommand)
     {
         this.destinationVideoFile = destinationVideoFile;
         this.videoInfo = videoInfo;
@@ -59,7 +55,7 @@ public class FFmpegDownloadWorker extends Task<WorkerState>
         ffmpegOptions.add("aac_adtstoasc");
     }
 
-    public FFmpegDownloadWorker(File destinationVideoFile, TwitchVideo videoInfo, String ffmpegCommand, List ffmpegOptions)
+    public FFmpegDownloadWorkerOld(File destinationVideoFile, TwitchVideoInfo videoInfo, String ffmpegCommand, List ffmpegOptions)
     {
         this.destinationVideoFile = destinationVideoFile;
         this.videoInfo = videoInfo;
@@ -68,21 +64,22 @@ public class FFmpegDownloadWorker extends Task<WorkerState>
     }
 
     @Override
-    protected WorkerState call() throws Exception
+    public void run()
     {
-        if (videoInfo == null) return null;
+        if (videoInfo == null) return;
         setVideoLength(videoInfo.getLength());
 
         List<String> command = new ArrayList<>();
         if (destinationVideoFile.exists()) {
-            LogHelper.e(TAG, "Destination file " +
-                    destinationVideoFile.getAbsolutePath() + " exists. It will be overwritten.\n"
+            printToPropertyChangeListeners("Destination file " +
+                    destinationVideoFile.getAbsolutePath() +
+                    " exists. It will be overwritten.\n"
             );
-            LogHelper.e(TAG, outputLine);
+            System.out.println(outputLine);
             destinationVideoFile.delete();
         }
 
-        LogHelper.e(TAG, "Destination file: " + destinationVideoFile.getAbsolutePath());
+        System.out.println("Destination file: " + destinationVideoFile.getAbsolutePath());
 
         command.add(ffmpegCommand);
         command.add("-i");
@@ -90,16 +87,15 @@ public class FFmpegDownloadWorker extends Task<WorkerState>
         command.addAll(ffmpegOptions);
         command.add(destinationVideoFile.getAbsolutePath());
 
-        LogHelper.e(TAG, "command: " + String.join(", ", command));
+        System.out.println("command: " + String.join(", ", command));
 
         ProcessBuilder pb = new ProcessBuilder(command);
-//        LogHelper.e(TAG, "Starting to convert Video to " + destinationVideoFile.getAbsolutePath());
-//        LogHelper.e(TAG, pb.command());
+//        System.out.println("Starting to convert Video to " + destinationVideoFile.getAbsolutePath());
+//        System.out.println(pb.command());
 //        pcs.firePropertyChange("videoLength", 0, videoLength);
-//        firePropertyChange("videoLength", 0, videoLength);
+        firePropertyChange("videoLength", 0, videoLength);
         videoInfo.setState(DOWNLOADING);
-        updateValue(STARTED);
-        updateMessage("Downloading " + destinationVideoFile.getName() + ".");
+
         pb.directory(new File(destinationVideoFile.getParent()));
 
         try {
@@ -107,23 +103,23 @@ public class FFmpegDownloadWorker extends Task<WorkerState>
             Scanner pSc = new Scanner(p.getErrorStream());
             while (pSc.hasNextLine()) {
                 String line = pSc.nextLine();
-//                LogHelper.e(TAG, PREFIX + line);
+//                System.out.println(PREFIX + line);
 
                 outputLine = PREFIX + line + "\n";
-                LogHelper.e(TAG, outputLine);
+                printToPropertyChangeListeners(outputLine);
 
                 Matcher matcher = Pattern.compile(TIME_PATTERN).matcher(line);
                 if (matcher.find()) {
                     try {
-                        LogHelper.e(TAG, PREFIX + line);
+                        System.out.println(PREFIX + line);
                         if (videoLength > 0) {
                             int progress = Utils.getProgress(matcher.group(0).replace("time=", ""));
-//                            int percent = (progress * 100) / videoLength;
-                            updateProgress(progress, videoLength);
+                            int percent = (progress * 100) / videoLength;
+                            getOverallProgressPanel().setProgress(Math.min(100, percent));
                         }
                     } catch (Exception e) {
                         e.printStackTrace();
-                        LogHelper.e(TAG, e.getMessage());
+                        printToPropertyChangeListeners(e.getMessage());
                     }
                 }
             }
@@ -131,7 +127,7 @@ public class FFmpegDownloadWorker extends Task<WorkerState>
             e.printStackTrace();
         }
 
-        LogHelper.e(TAG, "command exec has ended");
+        System.out.println("command exec has ended");
 
 //        try {
 //            Scanner fileListSc = new Scanner(fileListForFFmpeg);
@@ -140,7 +136,7 @@ public class FFmpegDownloadWorker extends Task<WorkerState>
 //                line = line.replace("file '", "").replace("'", "");
 //                File partFile = new File(line);
 //                if (partFile.delete()) {
-//                    LogHelper.e(TAG, "deleting " + partFile.getPath());
+//                    System.out.println("deleting " + partFile.getPath());
 //                    printToPropertyChangeListeners("deleting " + partFile.getPath() + "\n");
 //                }
 //            }
@@ -150,16 +146,15 @@ public class FFmpegDownloadWorker extends Task<WorkerState>
 //        }
 //
 //        if (fileListForFFmpeg.delete()) {
-//            LogHelper.e(TAG, "deleting " + fileListForFFmpeg.getName());
+//            System.out.println("deleting " + fileListForFFmpeg.getName());
 //            printToPropertyChangeListeners("deleting " + fileListForFFmpeg.getName() + "\n");
 //        }
 
         if (videoInfo != null) {
             videoInfo.setState(DOWNLOADED);
             videoInfo.setMainRelatedFileOnDisk(destinationVideoFile);
-//            firePropertyChange("state", STARTED, DONE);
+            firePropertyChange("state", STARTED, DONE);
         }
-        return DONE;
     }
 
     public void setVideoLength(int videoLength)
@@ -167,20 +162,20 @@ public class FFmpegDownloadWorker extends Task<WorkerState>
         int oldVideoLength = this.videoLength;
         this.videoLength = videoLength;
 //        pcs.firePropertyChange("videoLength", oldVideoLength, this.videoLength);
-//        firePropertyChange("videoLength", oldVideoLength, videoLength);
+        firePropertyChange("videoLength", oldVideoLength, videoLength);
     }
 
-    public TwitchVideo getRelatedTwitchVideoInfo()
+    public TwitchVideoInfo getRelatedTwitchVideoInfo()
     {
         return videoInfo;
     }
 
-    public void setVideoInfo(TwitchVideo videoInfo)
+    public void setVideoInfo(TwitchVideoInfo videoInfo)
     {
         this.videoInfo = videoInfo;
     }
 
-    public TwitchVideo getVideoInfo()
+    public TwitchVideoInfo getVideoInfo()
     {
         return videoInfo;
     }
@@ -188,5 +183,87 @@ public class FFmpegDownloadWorker extends Task<WorkerState>
     public File getDestinationVideoFile()
     {
         return destinationVideoFile;
+    }
+
+    protected void printToPropertyChangeListeners(String line)
+    {
+        String oldOutputLine = this.outputLine;
+        this.outputLine = line;
+//        pcs.firePropertyChange("outputline", oldOutputLine, line);
+        firePropertyChange("outputline", oldOutputLine, line);
+    }
+
+    private OverallProgressPanel getOverallProgressPanel()
+    {
+        synchronized (callbacks) {
+            if (!callbacks.isEmpty()) {
+                for (PropertyChangeListener cl : callbacks) {
+                    if (cl instanceof OverallProgressPanel) return (OverallProgressPanel) cl;
+                }
+            }
+        }
+        return null;
+    }
+
+    /**
+     * See {@link PropertyChangeListener} to check out what events will be fired once you set up a listener.
+     *
+     * @param callback The callback
+     */
+    public void addPropertyChangeListener(PropertyChangeListener callback)
+    {
+        synchronized (callbacks) {
+            if (!callbacks.isEmpty()) {
+                for (PropertyChangeListener cl : callbacks) {
+                    if (cl == callback) return;
+                }
+            }
+            callbacks.add(callback);
+        }
+    }
+
+    /**
+     * Removes the callback.
+     *
+     * @param callback The callback
+     */
+    public void removePropertyChangeListener(PropertyChangeListener callback)
+    {
+        synchronized (callbacks) {
+            callbacks.remove(callback);
+        }
+    }
+
+//    protected void postError(Exception exception, int id) {
+//        synchronized (callbacks) {
+//            if (!callbacks.isEmpty()) {
+//                for (PropertyChangeListener cl : callbacks) {
+//                    cl.onError(this, exception, id);
+//                }
+//            }
+//        }
+//    }
+
+    protected void firePropertyChange(PropertyChangeEvent event)
+    {
+        synchronized (callbacks) {
+            if (!callbacks.isEmpty()) {
+                for (PropertyChangeListener cl : callbacks) {
+                    cl.propertyChange(event);
+                }
+            }
+        }
+    }
+
+    protected void firePropertyChange(String key, Object oldValue, Object newValue)
+    {
+        synchronized (callbacks) {
+            if (!callbacks.isEmpty()) {
+                PropertyChangeEvent event = new PropertyChangeEvent(this, key, oldValue, newValue);
+                for (PropertyChangeListener cl : callbacks) {
+                    cl.propertyChange(event);
+                }
+            }
+        }
     }
 }

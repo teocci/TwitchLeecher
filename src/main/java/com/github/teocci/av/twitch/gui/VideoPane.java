@@ -4,6 +4,8 @@ import com.github.teocci.av.twitch.controllers.VideoViewController;
 import com.github.teocci.av.twitch.enums.State;
 import com.github.teocci.av.twitch.models.twitch.kraken.TwitchVideo;
 import com.github.teocci.av.twitch.utils.LogHelper;
+import com.github.teocci.av.twitch.utils.Utils;
+import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.geometry.Pos;
@@ -71,7 +73,7 @@ public class VideoPane extends Pane implements /*ItemListener,*/ PropertyChangeL
     private final HBox bottomBox = new HBox(SPACING_SIZE);
     private final CheckBox queued = new CheckBox("Add to queue");
 
-//    private final btnBox = new Panel(new FlowLayout(FlowLayout.RIGHT, 2, 0));
+    //    private final btnBox = new Panel(new FlowLayout(FlowLayout.RIGHT, 2, 0));
     private final HBox btnBox = new HBox(SPACING_SIZE);
     private final Button downloadBtn = new Button("Download");
     private final Button playBtn = new Button("Play");
@@ -213,11 +215,16 @@ public class VideoPane extends Pane implements /*ItemListener,*/ PropertyChangeL
         playBtn.managedProperty().bind(playBtn.visibleProperty());
         playBtn.setOnAction((e) -> {
             LogHelper.e(TAG, "Watch Btn pressed opening " + video.getMainRelatedFileOnDisk().getName());
-            try {
-                Desktop.getDesktop().open(video.getMainRelatedFileOnDisk());
-            } catch (IOException e1) {
-                e1.printStackTrace();
-            }
+            Utils.open(video.getMainRelatedFileOnDisk().toString());
+//                try {
+////                    if(Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.OPEN)) {
+////                        Desktop.getDesktop().browse(video.getMainRelatedFileOnDisk().toURI());
+////                    }
+//
+//                    Runtime.getRuntime().exec("gvfs-open " + video.getMainRelatedFileOnDisk());
+//                } catch (Exception e1) {
+//                    e1.printStackTrace();
+//                }
         });
 
         convertBtn.managedProperty().bind(convertBtn.visibleProperty());
@@ -226,9 +233,7 @@ public class VideoPane extends Pane implements /*ItemListener,*/ PropertyChangeL
         deleteBtn.managedProperty().bind(deleteBtn.visibleProperty());
         deleteBtn.setOnAction((e) -> {
             Alert alert = new Alert(CONFIRMATION);
-            alert.setTitle("Delete?");
-            String s = "Delete \"" + video.getTitle() + "\" ?";
-            alert.setContentText(s);
+            alert.setTitle("Delete \"" + video.getTitle() + "\" ?");
 
             Optional<ButtonType> result = alert.showAndWait();
 
@@ -406,7 +411,9 @@ public class VideoPane extends Pane implements /*ItemListener,*/ PropertyChangeL
     {
         LogHelper.e(TAG, "setInitialLayout()");
         queued.setVisible(true);
+        queued.setDisable(false);
         downloadBtn.setVisible(true);
+        downloadBtn.setDisable(false);
         preferencesBtn.setVisible(false);
         playBtn.setVisible(false);
         deleteBtn.setVisible(false);

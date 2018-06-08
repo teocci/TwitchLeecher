@@ -8,11 +8,11 @@ import com.github.teocci.av.twitch.gui.vod.channelsync.SyncChannelMainPanel;
 import com.github.teocci.av.twitch.models.twitch.kraken.TwitchVideoInfo;
 import com.github.teocci.av.twitch.models.twitch.kraken.TwitchVideoInfoList;
 import com.github.teocci.av.twitch.models.twitch.kraken.TwitchVideoPart;
-import com.github.teocci.av.twitch.utils.OsUtils;
+import com.github.teocci.av.twitch.utils.Utils;
 import com.github.teocci.av.twitch.utils.OsValidator;
 import com.github.teocci.av.twitch.TwitchLeecherPreferences;
 import com.github.teocci.av.twitch.worker.FFmpegConverterWorker;
-import com.github.teocci.av.twitch.worker.FFmpegDownloadWorker;
+import com.github.teocci.av.twitch.worker.FFmpegDownloadWorkerOld;
 import com.github.teocci.av.twitch.worker.HttpFileDownloadWorker;
 import com.github.teocci.av.twitch.worker.TwitchDownloadWorker;
 
@@ -22,16 +22,12 @@ import java.awt.event.ActionEvent;
 import java.beans.PropertyChangeEvent;
 import java.io.*;
 import java.net.MalformedURLException;
-import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.security.CodeSource;
-import java.security.ProtectionDomain;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.*;
-import java.util.regex.Pattern;
 
 import static com.github.teocci.av.twitch.TwitchLeecherPreferences.KEY_APP_BASE_PATH;
 import static com.github.teocci.av.twitch.enums.State.*;
@@ -70,7 +66,7 @@ public class ChannelSyncController implements ChannelSyncControllerInterface {
 
     private TwitchVideoInfo videoInfo, convertingVideoInfo;
 
-    private String baseDirPath = TwitchLeecherPreferences.getInstance().get(KEY_APP_BASE_PATH, OsUtils.getUserHome());
+    private String baseDirPath = TwitchLeecherPreferences.getInstance().get(KEY_APP_BASE_PATH, Utils.getUserHome());
     private String destinationDirPath = TwitchLeecherPreferences.getInstance().get(KEY_DOWNLOAD_PATH, baseDirPath + APP_DIR);
     private String playlistFolderPath = destinationDirPath + PLAYLIST_DIR;
 
@@ -163,7 +159,7 @@ public class ChannelSyncController implements ChannelSyncControllerInterface {
     @Override
     public void downloadTwitchVideo(TwitchVideoInfo videoInfo) {
         videoInfo.setState(QUEUED_FOR_DOWNLOAD);
-        if (videoWorkerQueue.isEmpty() && (downloadExecutor.getActiveCount() == 0)) {
+        if (videoWorkerQueue.isEmpty() && (ffmpegDownloader.getActiveCount() == 0)) {
             // Queue is Empty and no running workers
             videoWorkerQueue.add(videoInfo);
 //            initializeDownload();
@@ -200,16 +196,16 @@ public class ChannelSyncController implements ChannelSyncControllerInterface {
     public void convert2mp4(TwitchVideoInfo videoInfo) {
         ffmpegFileListFile = new File(playlistFolderPath + videoInfo.getId() + ".ffmpeglist");
 
-        String dateTimeStr = getSimpleDateString(videoInfo.getRecordedAt().getTime());
+        String dateTimeStr = Utils.getSimpleDateString(videoInfo.getRecordedAt().getTime());
         File destinationVideoFile = new File(destinationDirPath + "/" +
-                OsUtils.getValidFilename(videoInfo.getChannelName()) + "/" +
-                OsUtils.getValidFilename(videoInfo.getTitle()) + "_" +
+                Utils.getValidFilename(videoInfo.getChannelName()) + "/" +
+                Utils.getValidFilename(videoInfo.getTitle()) + "_" +
                 dateTimeStr + ".mp4"
         );
 
         List<String> ffmpegOptions = null;
         try {
-            ffmpegOptions = getRecommendedFFmpegParameters(videoInfo);
+            ffmpegOptions = Utils.getFFmpegParameters(videoInfo.getUrl());
         } catch (MalformedURLException e) {
             JOptionPane.showMessageDialog(mainPanel, e.getMessage(), "Error", ERROR_MESSAGE);
         }
@@ -272,8 +268,8 @@ public class ChannelSyncController implements ChannelSyncControllerInterface {
                     convertingVideoInfo = null;
                 }
             }
-        } else if (evt.getSource() instanceof FFmpegDownloadWorker) {
-            FFmpegDownloadWorker runningFFmpegWorker = (FFmpegDownloadWorker) evt.getSource();
+        } else if (evt.getSource() instanceof FFmpegDownloadWorkerOld) {
+            FFmpegDownloadWorkerOld runningFFmpegWorker = (FFmpegDownloadWorkerOld) evt.getSource();
             if (evt.getPropertyName().equals("outputline")) {
                 String output = evt.getNewValue().toString();
                 progressFrame.addOutputText(output);
@@ -290,14 +286,14 @@ public class ChannelSyncController implements ChannelSyncControllerInterface {
     }
 
     private void initAppConfig() {
-        OsUtils.checkDir(destinationDirPath);
-        playlistFolderPath = TwitchLeecherPreferences.getInstance().get(KEY_DOWNLOAD_PATH, OsUtils.getUserHome()) + PLAYLIST_DIR;
+        Utils.checkDir(destinationDirPath);
+        playlistFolderPath = TwitchLeecherPreferences.getInstance().get(KEY_DOWNLOAD_PATH, Utils.getUserHome()) + PLAYLIST_DIR;
     }
 
     private void initFFmpegConfig() {
         try {
             if (OsValidator.isWindows()) {
-                ffmpegExecutable = new File(OsUtils.getFFmpegPath(TwitchVodLeecher.class.getProtectionDomain()));
+                ffmpegExecutable = new File(Utils.getFFmpegPath(TwitchVodLeecher.class.getProtectionDomain()));
                 if (!ffmpegExecutable.exists()) {
                     int choice = JOptionPane.showConfirmDialog(
                             mainFrame,
@@ -367,9 +363,6 @@ public class ChannelSyncController implements ChannelSyncControllerInterface {
      */
     private void searchLocalFiles(TwitchVideoInfo videoInfo) {
         if (videoInfo.getState().equals(INITIAL)) {
-            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd_HHmm");
-            String dateTimeStr = sdf.format(videoInfo.getRecordedAt().getTime());
-
             File playlist = new File(playlistFolderPath + videoInfo.getId() + ".m3u");
             if (playlist.exists() && playlist.isFile() && playlist.canRead()) {
                 videoInfo.setMainRelatedFileOnDisk(playlist);
@@ -422,13 +415,13 @@ public class ChannelSyncController implements ChannelSyncControllerInterface {
 
             File destinationVideoFile = getVideoFile(videoInfo, true);
 
-            List<String> ffmpegOptions = getRecommendedFFmpegParameters(videoInfo);
+            List<String> ffmpegOptions = Utils.getFFmpegParameters(videoInfo.getUrl());
 
 //            mainPanel.getDownloadProgressPanel().setMaximum(videoInfo.getLength() * 100);
 //            mainPanel.getDownloadProgressPanel().setValue(0);
             mainPanel.getDownloadProgressPanel().setTitle(videoInfo.getTitle());
 
-            FFmpegDownloadWorker downloader = new FFmpegDownloadWorker(
+            FFmpegDownloadWorkerOld downloader = new FFmpegDownloadWorkerOld(
                     destinationVideoFile,
                     videoInfo,
                     ffmpegCommand,
@@ -654,24 +647,6 @@ public class ChannelSyncController implements ChannelSyncControllerInterface {
         fileWriter.close();
     }
 
-    private String recommendedFFmpegOptions(TwitchVideoInfo tvi) throws MalformedURLException {
-        URL twitchUrl = tvi.getUrl();
-        if (Pattern.matches("^https?://www.twitch.tv/\\w+/b/\\d+", twitchUrl.toString())) {
-            return "-c copy";
-        } else if (Pattern.matches("^https?://www.twitch.tv/\\w+/c/\\d+", twitchUrl.toString())) {
-            return "-c copy";
-        } else if (Pattern.matches("^https?://www.twitch.tv/\\w+/v/\\d+", twitchUrl.toString())) {
-            return "-c:v libx264 -c:a copy -bsf:a aac_adtstoasc";
-        } else if (Pattern.matches("^https?://www.twitch.tv/videos/\\d+", twitchUrl.toString())) {
-            return "-c:v copy -c:a copy -bsf:a aac_adtstoasc";
-        }
-        return null;
-    }
-
-    private List<String> getRecommendedFFmpegParameters(TwitchVideoInfo tvi) throws MalformedURLException {
-        return new ArrayList<>(Arrays.asList(recommendedFFmpegOptions(tvi).split(" ")));
-    }
-
     public void progressFrameSetVisible(boolean x) {
         this.progressFrame.setVisible(x);
     }
@@ -691,24 +666,12 @@ public class ChannelSyncController implements ChannelSyncControllerInterface {
         }
     }
 
-    private File checkDir(String dirPath) {
-        File dirFile = new File(dirPath);
-        if (!dirFile.exists() && !dirFile.mkdir()) return null;
-
-        return dirFile;
-    }
-
     private File getVideoFile(TwitchVideoInfo videoInfo, boolean withExt) {
-        String dateTime = getSimpleDateString(videoInfo.getRecordedAt().getTime());
-        File channelFile = checkDir(destinationDirPath + "/" + OsUtils.getValidFilename(videoInfo.getChannelName()) + "/");
+        String dateTime = Utils.getSimpleDateString(videoInfo.getRecordedAt().getTime());
+        File channelFile = Utils.getDirAsFile(destinationDirPath + "/" + Utils.getValidFilename(videoInfo.getChannelName()) + "/");
         if (channelFile == null) return null;
         return new File( channelFile.getAbsolutePath() + "/" +
-                OsUtils.getValidFilename(videoInfo.getTitle()) + "_" +  dateTime + (withExt ? ".mp4" : ""));
-    }
-
-    private String getSimpleDateString(Date time) {
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd_HHmm");
-        return sdf.format(time);
+                Utils.getValidFilename(videoInfo.getTitle()) + "_" +  dateTime + (withExt ? ".mp4" : ""));
     }
 
     private boolean isQueueEmpty() {

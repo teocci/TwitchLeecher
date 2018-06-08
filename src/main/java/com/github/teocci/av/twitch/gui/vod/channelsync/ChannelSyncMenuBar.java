@@ -1,7 +1,7 @@
 package com.github.teocci.av.twitch.gui.vod.channelsync;
 
 import com.github.teocci.av.twitch.controllers.ChannelSyncController;
-import com.github.teocci.av.twitch.utils.OsUtils;
+import com.github.teocci.av.twitch.utils.Utils;
 import com.github.teocci.av.twitch.TwitchLeecherPreferences;
 
 import javax.swing.*;
@@ -55,7 +55,7 @@ public class ChannelSyncMenuBar extends JMenuBar implements ActionListener
 
             JButton selectFolderBtn = new JButton("...");
             selectFolderBtn.addActionListener(e -> {
-                String currentDestinationDirectory = prefs.get(TwitchLeecherPreferences.KEY_DOWNLOAD_PATH, OsUtils.getUserHome());
+                String currentDestinationDirectory = prefs.get(TwitchLeecherPreferences.KEY_DOWNLOAD_PATH, Utils.getUserHome());
                 File destinationDirectory = showDestinationDirChooser(currentDestinationDirectory);
                 destinationFolderTextField.setText(destinationDirectory.getPath());
             });
