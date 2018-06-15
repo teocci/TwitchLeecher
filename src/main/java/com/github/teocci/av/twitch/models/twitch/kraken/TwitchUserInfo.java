@@ -1,5 +1,6 @@
 package com.github.teocci.av.twitch.models.twitch.kraken;
 
+import com.github.teocci.av.twitch.utils.LogHelper;
 import com.google.gson.annotations.SerializedName;
 
 import java.util.Date;
@@ -11,6 +12,8 @@ import java.util.Date;
  */
 public class TwitchUserInfo
 {
+    private static final String TAG = LogHelper.makeLogTag(TwitchUserInfo.class);
+
     public static final String API_URL = "https://api.twitch.tv/kraken/users";
 
     @SerializedName("_id")
@@ -38,7 +41,7 @@ public class TwitchUserInfo
     public String toString()
     {
         return "TwitchUserInfo{" +
-                "_id='" + id + '\'' +
+                "_id='" + id + "', " +
                 "display_name='" + displayName + '\'' +
                 '}';
     }

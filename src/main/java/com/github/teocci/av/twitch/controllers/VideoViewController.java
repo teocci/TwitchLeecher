@@ -38,7 +38,7 @@ public class VideoViewController
     public String toString()
     {
         return "VideoViewController{" +
-                "title='" + video.getTitle() + '\'' +
+                "video=" + video.toString() +
                 '}';
     }
 

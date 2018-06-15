@@ -31,33 +31,60 @@ public class TwitchVideo extends Observable
     private static final String TAG = LogHelper.makeLogTag(TwitchVideo.class);
 
     public static final String API_URL = "https://api.twitch.tv";
+    private static final String API_VODS_URL = "https://api.twitch.tv/api/vods/";
+    private static final String VOD_URL = "http://usher.twitch.tv/vod/";
 
     public static final String BASIC_TS_FILE = "^(\\d+\\.ts)";
     public static final String RANGE_TS_FILE = "^(\\d+\\.ts)\\?start_offset=(\\d+)&end_offset=(\\d+)$";
 
+    private static final String PATTERN_A_URL = "http://www.twitch.tv/\\w+/b/\\d+";
+    private static final String PATTERN_C_URL = "http://www.twitch.tv/\\w+/c/\\d+";
+    private static final String PATTERN_V_URL = "http://www.twitch.tv/\\w+/v/\\d+";
+
+    private static final String PATTERN_COMMENT_LINE = "^#.*$";
+
+    @SerializedName("_id")
+    private String id;
+    @SerializedName("broadcast_id")
+    private String broadcastId;
+    @SerializedName("broadcast_type")
+    private String broadcastType;
+
+    @SerializedName("channel")
+    private TwitchChannel channel;
+
+    @SerializedName("created_at")
+    private String createdAt;
+
+    private String description;
+
+    @SerializedName("recorded_at")
+    private String recordedAt;
+
+    private String game;
+    private double length; //Twitch changed that to double.
+
+    private HashMap<String, String> preview;
+
+    @SerializedName("published_at")
+    private String publishedAt;
+
+    @SerializedName("status")
+    private String status;
+
+    @SerializedName("tag_list")
+    private String tagList;
+
+    @SerializedName("thumbnails")
+    private HashMap<String, TwitchThumbnail[]> thumbnails;
 
     @SerializedName("title")
     private String title;
-    private String description;
-    @SerializedName("broadcast_id")
-    private String broadcastId;
-    @SerializedName("tag_list")
-    private String tagList;
-    @SerializedName("_id")
-    private String id;
-    @SerializedName("recorded_at")
-    private String recordedAt;
-    private String game;
-    private double length; //Twitch changed that to double.
-    private HashMap<String, String> preview;
     private String url;
     private int views;
 
     @SerializedName("_links")
     private HashMap<String, String> links;
-
-    @SerializedName("channel")
-    private TwitchChannel channel;
 
     private Image image;
 
@@ -81,30 +108,6 @@ public class TwitchVideo extends Observable
         this.state = State.INITIAL;
         this.relatedFiles = new HashMap<>();
     }
-
-    public static TwitchVideo getTwitchVideoInfo(String id) throws IOException
-    {
-        URL infoApiUrl = new URL(API_URL + "/kraken/videos/" + id);
-        InputStream is = infoApiUrl.openStream();
-        InputStreamReader ir = new InputStreamReader(is);
-        TwitchVideo tvi = new Gson().fromJson(ir, TwitchVideo.class);
-        ir.close();
-        is.close();
-        return tvi;
-    }
-
-    public State getState()
-    {
-        return state;
-    }
-
-    public void setState(State state)
-    {
-        State oldState = this.state;
-        this.state = state;
-        pcs.firePropertyChange("state", oldState, this.state);
-    }
-
 
     @Override
     public boolean equals(Object o)
@@ -146,12 +149,12 @@ public class TwitchVideo extends Observable
         return result;
     }
 
-
     @Override
     public String toString()
     {
         return "TwitchVideo{" +
-                "title='" + title + '\'' +
+                "title='" + title + "', " +
+                "published_at='" + publishedAt + '\'' +
                 '}';
     }
 
@@ -217,26 +220,6 @@ public class TwitchVideo extends Observable
         this.pcs.removePropertyChangeListener(listener);
     }
 
-
-    public void update(URL twitchUrl) throws IOException
-    {
-        if (Pattern.matches("http://www.twitch.tv/\\w+/b/\\d+", twitchUrl.toString())) {
-            String id = twitchUrl.toString().split("/")[5];
-            update("a".concat(id));
-        } else if (Pattern.matches("http://www.twitch.tv/\\w+/c/\\d+", twitchUrl.toString())) {
-            String id = twitchUrl.toString().split("/")[5];
-            update("c".concat(id));
-        } else if (Pattern.matches("http://www.twitch.tv/\\w+/v/\\d+", twitchUrl.toString())) {
-            String id = twitchUrl.toString().split("/")[5];
-            update("v".concat(id));
-        }
-    }
-
-    public void update(String id) throws IOException
-    {
-        update(getTwitchVideoInfo(id));
-    }
-
     public void update(TwitchVideo tvi)
     {
         if (this.channel == null) this.channel = new TwitchChannel();
@@ -255,12 +238,46 @@ public class TwitchVideo extends Observable
         setChannelLink(tvi.getChannelLink());
         setSelfLink(tvi.getSelfLink());
         setChannelName(tvi.getChannelName());
-        setChannelDisplayname(tvi.getChannelDisplaylName());
+        setChannelDisplayName(tvi.getChannelDisplaylName());
         setImage(tvi.image);
         dlInfoNeedsUpdate = true;
         pcs.firePropertyChange("fullUpdate", null, this);
     }
 
+    public void update(URL twitchUrl) throws IOException
+    {
+        if (Pattern.matches(PATTERN_A_URL, twitchUrl.toString())) {
+            String id = twitchUrl.toString().split("/")[5];
+            update("a".concat(id));
+        } else if (Pattern.matches(PATTERN_C_URL, twitchUrl.toString())) {
+            String id = twitchUrl.toString().split("/")[5];
+            update("c".concat(id));
+        } else if (Pattern.matches(PATTERN_V_URL, twitchUrl.toString())) {
+            String id = twitchUrl.toString().split("/")[5];
+            update("v".concat(id));
+        }
+    }
+
+    public void update(String id) throws IOException
+    {
+        update(getTwitchVideoInfo(id));
+    }
+
+    public static TwitchVideo getTwitchVideoInfo(String id) throws IOException
+    {
+        URL infoApiUrl = new URL(API_URL + "/kraken/videos/" + id);
+        InputStream is = infoApiUrl.openStream();
+        InputStreamReader ir = new InputStreamReader(is);
+        TwitchVideo tvi = new Gson().fromJson(ir, TwitchVideo.class);
+        ir.close();
+        is.close();
+        return tvi;
+    }
+
+    public State getState()
+    {
+        return state;
+    }
 
     public String getTitle()
     {
@@ -360,7 +377,7 @@ public class TwitchVideo extends Observable
 
 
     /**
-     * The new VOD System uses m3u PLaylist instead. The REST-API returns empty lists.
+     * The new VOD System uses m3u Playlist instead. The REST-API returns empty lists.
      * <p>
      * This Method fetches the relevant Information and stores them in the same way as the old-VOD-System
      *
@@ -372,19 +389,21 @@ public class TwitchVideo extends Observable
             if (this.dlInfo == null) this.dlInfo = new TwitchDownloadInfo();
 
             String idNr = this.id.substring(1);
-            URL tokenUrl = new URL("https://api.twitch.tv/api/vods/" + idNr + "/access_token");
+            URL tokenUrl = new URL(API_VODS_URL + idNr + "/access_token");
 //            URL tokenUrl = new URL(String.format("http://api.twitch.tv/api/channels/%s/access_token", channel.getName()));
 
             String data = Network.getJSON(tokenUrl);
 //            JsonObject p = new Gson().fromJson(data, JsonObject.class);
-//            System.out.println(p);
+//            LogHelper.e(TAG, p);
 
             TwitchVodAccessToken vodAccessToken = new Gson().fromJson(data, TwitchVodAccessToken.class);
-            System.out.println(vodAccessToken);
+            LogHelper.e(TAG, vodAccessToken);
 
             // URLEncoder is used to encode the Token(JSON) to a valid URL
-//            URL qualityPlaylistUrl = new URL("http://usher.twitch.tv/vod/" + idNr + "?nauth=" + URLEncoder.encode(vodAccessToken.getToken(), "UTF-8") + "&nauthsig=" + vodAccessToken.getSig()); Twitch changed something source download doesn work with that request
-            URL qualityPlaylistUrl = new URL("http://usher.twitch.tv/vod/" + vodAccessToken.getVodId() +
+//            URL qualityPlaylistUrl = new URL("http://usher.twitch.tv/vod/" + idNr + "?nauth=" + URLEncoder.encode(vodAccessToken.getToken(), "UTF-8") +
+// "&nauthsig=" + vodAccessToken.getSig()); Twitch changed something source download doesn work with that request
+
+            URL qualityPlaylistUrl = new URL(VOD_URL + vodAccessToken.getVodId() +
                     "?player=twitchweb&allow_source=true&nauth=" + URLEncoder.encode(vodAccessToken.getToken(), "UTF-8") +
                     "&nauthsig=" + vodAccessToken.getSig()
             );
@@ -393,11 +412,11 @@ public class TwitchVideo extends Observable
             Scanner qualityPlaylistSc = new Scanner(qualityPlaylistIs);
             while (qualityPlaylistSc.hasNextLine()) {
                 String line = qualityPlaylistSc.nextLine();
-//                System.out.println(line);
-                if (!Pattern.matches("^#.*$", line)) { //filter Out comment lines
-                    System.out.println(line);
+//                LogHelper.e(TAG, line);
+                if (!Pattern.matches(PATTERN_COMMENT_LINE, line)) { //filter Out comment lines
                     String quality = line.split("/")[4];
                     playlistUrl = new URL(line);
+                    LogHelper.e(TAG, line);
 
                     String m3uFilename = new File(playlistUrl.getFile()).getName();
 
@@ -407,21 +426,28 @@ public class TwitchVideo extends Observable
 
                     while (playlistSc.hasNextLine()) {
                         String partLine = playlistSc.nextLine();
-//                        System.out.println(partLine);
+//                        LogHelper.e(TAG, partLine);
                         if (partLine.isEmpty())
                             continue;
                         Matcher m = partFileNameStringPattern.matcher(partLine);
                         if (m.matches()) {
                             String partURL = String.format("%s%s", line.replace(m3uFilename, ""), m.group(1));
-                            System.out.println(partURL);
                             TwitchVideoPart tbp = new TwitchVideoPart(partURL, -1, null, null);
                             dlInfo.addTwitchBroadcastPart(tbp, quality);
+                            LogHelper.e(TAG, partURL);
                         }
                     }
                 }
             }
             dlInfoNeedsUpdate = false;
         }
+    }
+
+    public void setState(State state)
+    {
+        State oldState = this.state;
+        this.state = state;
+        pcs.firePropertyChange("state", oldState, this.state);
     }
 
     public void setTitle(String title)
@@ -501,11 +527,11 @@ public class TwitchVideo extends Observable
         pcs.firePropertyChange("channelName", oldChannelName, this.channel.getName());
     }
 
-    public void setChannelDisplayname(String channelDisplayname)
+    public void setChannelDisplayName(String channelDisplayName)
     {
-        String oldChannelDisplayname = this.channel.getDisplayName();
-        this.channel.setDisplayName(channelDisplayname);
-        pcs.firePropertyChange("channelDisplayname", oldChannelDisplayname, channelDisplayname);
+        String oldChannelDisplayName = this.channel.getDisplayName();
+        this.channel.setDisplayName(channelDisplayName);
+        pcs.firePropertyChange("channelDisplayName", oldChannelDisplayName, channelDisplayName);
     }
 
     public void setViews(int views)
@@ -547,6 +573,57 @@ public class TwitchVideo extends Observable
         }
     }
 
+
+    public String getBroadcastType()
+    {
+        return broadcastType;
+    }
+
+    public void setBroadcastType(String broadcastType)
+    {
+        this.broadcastType = broadcastType;
+    }
+
+    public String getCreatedAt()
+    {
+        return createdAt;
+    }
+
+    public void setCreatedAt(String createdAt)
+    {
+        this.createdAt = createdAt;
+    }
+
+    public void setLength(double length)
+    {
+        this.length = length;
+    }
+
+    public HashMap<String, String> getPreview()
+    {
+        return preview;
+    }
+
+    public String getPublishedAt()
+    {
+        return publishedAt;
+    }
+
+    public void setPublishedAt(String publishedAt)
+    {
+        this.publishedAt = publishedAt;
+    }
+
+    public HashMap<String, TwitchThumbnail[]> getThumbnails()
+    {
+        return thumbnails;
+    }
+
+    public void setThumbnails(HashMap<String, TwitchThumbnail[]> thumbnails)
+    {
+        this.thumbnails = thumbnails;
+    }
+
     public Image getPreviewImage()
     {
         return image;
@@ -556,13 +633,13 @@ public class TwitchVideo extends Observable
     {
         HashMap<String, String> videoInformation = new HashMap<>();
 
+        videoInformation.put("Id", getId());
         videoInformation.put("PreviewURL", getPreviewUrl("medium").toString());
         videoInformation.put("URL", getUrl().toString());
         videoInformation.put("ChannelName", getChannelName());
         videoInformation.put("ChannelDisplayName", getChannelDisplaylName());
         videoInformation.put("BroadcastId", getBroadcastId());
         videoInformation.put("TagList", getTagList());
-        videoInformation.put("Id", getId());
         videoInformation.put("recordedAt", Integer.toString(getRecordedAt().get(Calendar.YEAR)));
         videoInformation.put("Game", getGame());
         videoInformation.put("BestAvailableQuality", getDownloadInfo().getBestAvailableQuality());
@@ -578,6 +655,7 @@ public class TwitchVideo extends Observable
     {
         // LinkedHashMap<String, String> streamInfo = super.getStreamInformation();
         LinkedHashMap<String, String> streamInformation = new LinkedHashMap<>();
+        streamInformation.put("id", getId());
         streamInformation.put("Title", getTitle());
         streamInformation.put("Description", getDescription());
         streamInformation.put("Channel", getChannelName());
@@ -587,7 +665,6 @@ public class TwitchVideo extends Observable
         streamInformation.put("BestQuality", getDownloadInfo().getBestAvailableQuality());
         streamInformation.put("broadcastId", getBroadcastId());
         streamInformation.put("tagList", getTagList());
-        streamInformation.put("id", getId());
         streamInformation.put("previewImageURL", getPreviewUrl("medium").toString());
         streamInformation.put("url", getUrl().toString());
         streamInformation.put("views", String.valueOf(views));
@@ -642,5 +719,15 @@ public class TwitchVideo extends Observable
     public void setChannel(TwitchChannel channel)
     {
         this.channel = channel;
+    }
+
+    public String getStatus()
+    {
+        return status;
+    }
+
+    public void setStatus(String status)
+    {
+        this.status = status;
     }
 }

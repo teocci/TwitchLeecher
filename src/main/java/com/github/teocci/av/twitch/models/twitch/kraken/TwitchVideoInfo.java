@@ -1,6 +1,7 @@
 package com.github.teocci.av.twitch.models.twitch.kraken;
 
 import com.github.teocci.av.twitch.enums.State;
+import com.github.teocci.av.twitch.utils.LogHelper;
 import com.github.teocci.av.twitch.utils.Network;
 import com.github.teocci.av.twitch.utils.Utils;
 import com.google.gson.Gson;
@@ -33,6 +34,8 @@ import java.util.regex.Pattern;
  */
 public class TwitchVideoInfo extends Observable
 {
+    private static final String TAG = LogHelper.makeLogTag(TwitchVideoInfo.class);
+
     public static final String API_URL = "https://api.twitch.tv";
 
     public static final String BASIC_TS_FILE = "^(\\d+\\.ts)";
@@ -382,10 +385,10 @@ public class TwitchVideoInfo extends Observable
 
             String data = Network.getJSON(tokenUrl);
 //            JsonObject p = new Gson().fromJson(data, JsonObject.class);
-//            System.out.println(p);
+//            LogHelper.e(TAG, p);
 
             TwitchVodAccessToken vodAccessToken = new Gson().fromJson(data, TwitchVodAccessToken.class);
-            System.out.println(vodAccessToken);
+            LogHelper.e(TAG, vodAccessToken);
 
             // URLEncoder is used to encode the Token(JSON) to a valid URL
 //            URL qualityPlaylistUrl = new URL("http://usher.twitch.tv/vod/" + idNr + "?nauth=" + URLEncoder.encode(vodAccessToken.getToken(), "UTF-8") + "&nauthsig=" + vodAccessToken.getSig()); Twitch changed something source download doesn work with that request
@@ -398,9 +401,9 @@ public class TwitchVideoInfo extends Observable
             Scanner qualityPlaylistSc = new Scanner(qualityPlaylistIs);
             while (qualityPlaylistSc.hasNextLine()) {
                 String line = qualityPlaylistSc.nextLine();
-//                System.out.println(line);
+//                LogHelper.e(TAG, line);
                 if (!Pattern.matches("^#.*$", line)) { //filter Out comment lines
-                    System.out.println(line);
+                    LogHelper.e(TAG, line);
                     String quality = line.split("/")[4];
                     playlistUrl = new URL(line);
 
@@ -412,13 +415,13 @@ public class TwitchVideoInfo extends Observable
 
                     while (playlistSc.hasNextLine()) {
                         String partLine = playlistSc.nextLine();
-//                        System.out.println(partLine);
+//                        LogHelper.e(TAG, partLine);
                         if (partLine.isEmpty())
                             continue;
                         Matcher m = partFileNameStringPattern.matcher(partLine);
                         if (m.matches()) {
                             String partURL = String.format("%s%s", line.replace(m3uFilename, ""), m.group(1));
-                            System.out.println(partURL);
+                            LogHelper.e(TAG, partURL);
                             TwitchVideoPart tbp = new TwitchVideoPart(partURL, -1, null, null);
                             dlInfo.addTwitchBroadcastPart(tbp, quality);
                         }
@@ -510,7 +513,7 @@ public class TwitchVideoInfo extends Observable
     {
         String oldChannelDisplayname = this.channel.getDisplayName();
         this.channel.setDisplayName(channelDisplayname);
-        pcs.firePropertyChange("channelDisplayname", oldChannelDisplayname, channelDisplayname);
+        pcs.firePropertyChange("channelDisplayName", oldChannelDisplayname, channelDisplayname);
     }
 
     public void setViews(int views)

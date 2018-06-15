@@ -128,6 +128,14 @@ public class VideoPane extends Pane implements /*ItemListener,*/ PropertyChangeL
         layoutComponents();
     }
 
+    @Override
+    public String toString()
+    {
+        return video == null ? "VideoPane{}" : "VideoPane{" +
+                "video=" + video +
+                '}';
+    }
+
     private void initGUIElements()
     {
 //        thumbnail.setTooltip(new Tooltip(video.getTitle()));
@@ -545,5 +553,10 @@ public class VideoPane extends Pane implements /*ItemListener,*/ PropertyChangeL
     public void updatePreviewImage() throws IOException
     {
         thumbnail.setImage(video.getPreviewImage());
+    }
+
+    public String getPublishedAt()
+    {
+        return video == null ? "" : video.getPublishedAt();
     }
 }

@@ -1,5 +1,6 @@
 package com.github.teocci.av.twitch.models.twitch.kraken;
 
+import com.github.teocci.av.twitch.utils.LogHelper;
 import com.github.teocci.av.twitch.utils.Network;
 import com.google.gson.Gson;
 import com.google.gson.JsonNull;
@@ -15,6 +16,8 @@ import java.util.List;
  */
 public class TwitchUserInfoList
 {
+    private static final String TAG = LogHelper.makeLogTag(TwitchUserInfoList.class);
+
     public static final String API_URL = "https://api.twitch.tv/kraken/users";
 
     @SerializedName("_total")
@@ -22,6 +25,14 @@ public class TwitchUserInfoList
 
     private List<TwitchUserInfo> users;
 
+
+    @Override
+    public String toString()
+    {
+        return "TwitchUserInfoList{" +
+                "_total='" + total + '\'' +
+                '}';
+    }
 
     public int getTotal()
     {
@@ -48,15 +59,15 @@ public class TwitchUserInfoList
     {
         String data = Network.getJSON(String.format(API_URL + "?login=%s", channelName));
         JsonObject p = new Gson().fromJson(data, JsonObject.class);
-        System.out.println(p);
+        LogHelper.e(TAG, p);
 
         if (p == null) return null;
         if (p.get("_total").getAsInt() < 1) return null;
 
         if (p.has("users") && !(p.get("users") instanceof JsonNull)) {
-//            System.out.println("Has users: " + p.getAsJsonArray().get(0));
+//            LogHelper.e(TAG, "Has users: " + p.getAsJsonArray().get(0));
             TwitchUserInfoList users = new Gson().fromJson(p, TwitchUserInfoList.class);
-            System.out.println(users);
+//            LogHelper.e(TAG, users);
             return users;
         }
 

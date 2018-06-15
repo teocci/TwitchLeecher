@@ -2,6 +2,7 @@ package com.github.teocci.av.twitch.managers;
 
 import com.github.teocci.av.twitch.controllers.ChannelSearchController;
 import com.github.teocci.av.twitch.controllers.VideoViewController;
+import com.github.teocci.av.twitch.gui.VideoPaneComparator;
 import com.github.teocci.av.twitch.models.twitch.kraken.TwitchUserInfo;
 import com.github.teocci.av.twitch.models.twitch.kraken.TwitchVideo;
 import com.github.teocci.av.twitch.models.twitch.kraken.TwitchVideoList;
@@ -12,7 +13,6 @@ import com.google.common.base.Joiner;
 import com.google.gson.Gson;
 import com.google.gson.JsonNull;
 import com.google.gson.JsonObject;
-import com.google.gson.reflect.TypeToken;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.scene.layout.Pane;
@@ -20,13 +20,13 @@ import javafx.scene.layout.Pane;
 import java.io.*;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Scanner;
 import java.util.concurrent.ConcurrentHashMap;
 
-import static com.github.teocci.av.twitch.enums.State.CONVERTED;
-import static com.github.teocci.av.twitch.enums.State.DOWNLOADED;
-import static com.github.teocci.av.twitch.enums.State.INITIAL;
+import static com.github.teocci.av.twitch.enums.State.*;
 import static com.github.teocci.av.twitch.utils.Config.PLAYLIST_PATH;
 
 /**
@@ -140,6 +140,7 @@ public class VideoListManager
         if (!broadcastType.isEmpty()) parameters.add(String.format("broadcast_type=%s", broadcastType));
         if (limit > 0) parameters.add(String.format("limit=%d", limit));
         if (offset >= 0) parameters.add(String.format("offset=%d", offset));
+        parameters.add(String.format("sort=%s", "time"));
         if (!parameters.isEmpty()) {
             urlStr = urlStr.concat("?");
             String joinedParameters = Joiner.on('&').join(parameters);
@@ -165,7 +166,7 @@ public class VideoListManager
     {
         String data = Network.getJSON(requestURL);
         JsonObject p = new Gson().fromJson(data, JsonObject.class);
-//        LogHelper.e(TAG, p);
+        LogHelper.e(TAG, p);
 
         if (p == null) return;
         if (p.has("videos") && !(p.get("videos") instanceof JsonNull)) {
@@ -174,7 +175,7 @@ public class VideoListManager
 //            List<TwitchVideo> videos = new Gson().fromJson(p.getAsJsonArray("videos"), new TypeToken<List<TwitchVideo>>() {}.getType());
 //            LogHelper.e(TAG, videos);
             twitchVideoList = new Gson().fromJson(p, TwitchVideoList.class); //deserialize
-            LogHelper.e(TAG, twitchVideoList);
+//            LogHelper.e(TAG, twitchVideoList);
             if (twitchVideoList.getTotal() < 1) throw new IOException("Channel does not have videos.");
 
             synchronized (lock) {
@@ -206,6 +207,8 @@ public class VideoListManager
             }
 
             videoViews = FXCollections.observableArrayList(extractVideoViews());
+
+            FXCollections.sort(videoViews, new VideoPaneComparator());
         }
     }
 
@@ -251,6 +254,7 @@ public class VideoListManager
         if (video.getState().equals(INITIAL)) {
             File playlist = new File(PLAYLIST_PATH + video.getId() + ".m3u");
             if (playlist.exists() && playlist.isFile() && playlist.canRead()) {
+                LogHelper.e(TAG, "playlist exists.");
                 video.setMainRelatedFileOnDisk(playlist);
                 video.putRelatedFile("playlist", playlist);
                 try {
@@ -259,6 +263,7 @@ public class VideoListManager
                     int i = 0;
                     while (sc.hasNextLine()) {
                         String line = sc.nextLine();
+                        LogHelper.e(TAG, "line: " + line);
                         File file = new File(line);
                         if (file.exists()) {
                             i++;
