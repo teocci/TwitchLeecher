@@ -54,117 +54,116 @@ public class PromptingTaskTest extends Application
     }
 
     public static void main(String[] args) { launch(args); }
-}
 
-class LoadTextTask extends Task<Void>
-{
-    private final String[] lines;
-    private final Pane container;
-    private final IntegerProperty idx = new SimpleIntegerProperty(0);
-
-    LoadTextTask(final String[] lines, final Pane container)
+    class LoadTextTask extends Task<Void>
     {
-        this.lines = lines;
-        this.container = container;
-    }
+        private final String[] lines;
+        private final Pane container;
+        private final IntegerProperty idx = new SimpleIntegerProperty(0);
 
-    @Override
-    protected Void call() throws Exception
-    {
-        try {
-            updateProgress(0, lines.length);
+        LoadTextTask(final String[] lines, final Pane container)
+        {
+            this.lines = lines;
+            this.container = container;
+        }
 
-            while (idx.get() < lines.length) {
-                final Label nextLabel = new Label();
-                final int curIdx = idx.get();
-                updateMessage("Reading Line: " + curIdx);
-                String nextText = lines[curIdx];
+        @Override
+        protected Void call() throws Exception
+        {
+            try {
+                updateProgress(0, lines.length);
 
-                if ("MISSING".equals(nextText)) {
-                    updateMessage("Prompting for missing text for line: " + curIdx);
-                    FutureTask<String> futureTask = new FutureTask<>(
-                            new MissingTextPrompt(container.getScene().getWindow())
+                while (idx.get() < lines.length) {
+                    final Label nextLabel = new Label();
+                    final int curIdx = idx.get();
+                    updateMessage("Reading Line: " + curIdx);
+                    String nextText = lines[curIdx];
+
+                    if ("MISSING".equals(nextText)) {
+                        updateMessage("Prompting for missing text for line: " + curIdx);
+                        FutureTask<String> futureTask = new FutureTask<>(
+                                new MissingTextPrompt(container.getScene().getWindow())
+                        );
+                        Platform.runLater(futureTask);
+                        nextText = futureTask.get();
+                        nextLabel.setStyle("-fx-background-color: palegreen;");
+                    }
+                    nextLabel.setText(nextText);
+
+                    Platform.runLater(
+                            new AddNodeLater(
+                                    container,
+                                    curIdx,
+                                    nextLabel
+                            )
                     );
-                    Platform.runLater(futureTask);
-                    nextText = futureTask.get();
+                    idx.set(curIdx + 1);
 
-                    nextLabel.setStyle("-fx-background-color: palegreen;");
+                    updateProgress(curIdx + 1, lines.length);
+
+                    Thread.sleep(200);
                 }
-                nextLabel.setText(nextText);
 
-                Platform.runLater(
-                        new AddNodeLater(
-                                container,
-                                curIdx,
-                                nextLabel
-                        )
-                );
-                idx.set(curIdx + 1);
+                updateMessage("Loading Text Completed: " + idx.get() + " lines loaded.");
+            } catch (Throwable t) {
+                t.printStackTrace();
+            }
+            return null;
+        }
 
-                updateProgress(curIdx + 1, lines.length);
+        class MissingTextPrompt implements Callable<String>
+        {
+            final Window owner;
 
-                Thread.sleep(200);
+            MissingTextPrompt(Window owner)
+            {
+                this.owner = owner;
             }
 
-            updateMessage("Loading Text Completed: " + idx.get() + " lines loaded.");
-        } catch (Throwable t) {
-            t.printStackTrace();
-        }
-        return null;
-    }
+            @Override
+            public String call() throws Exception
+            {
+                final Stage dialog = new Stage();
+                dialog.setTitle("Enter Missing Text");
+                dialog.initOwner(owner);
+                dialog.initStyle(StageStyle.UTILITY);
+                dialog.initModality(Modality.WINDOW_MODAL);
 
-    class MissingTextPrompt implements Callable<String>
-    {
-        final Window owner;
+                final TextField textField = new TextField();
+                final Button submitButton = new Button("Submit");
+                submitButton.setDefaultButton(true);
+                submitButton.setOnAction(t -> dialog.close());
 
-        MissingTextPrompt(Window owner)
-        {
-            this.owner = owner;
-        }
+                final VBox layout = new VBox(10);
+                layout.setAlignment(Pos.CENTER_RIGHT);
+                layout.setStyle("-fx-background-color: azure; -fx-padding: 10;");
+                layout.getChildren().setAll(textField, submitButton);
 
-        @Override
-        public String call() throws Exception
-        {
-            final Stage dialog = new Stage();
-            dialog.setTitle("Enter Missing Text");
-            dialog.initOwner(owner);
-            dialog.initStyle(StageStyle.UTILITY);
-            dialog.initModality(Modality.WINDOW_MODAL);
+                dialog.setScene(new Scene(layout));
+                dialog.showAndWait();
 
-            final TextField textField = new TextField();
-            final Button submitButton = new Button("Submit");
-            submitButton.setDefaultButton(true);
-            submitButton.setOnAction(t -> dialog.close());
-
-            final VBox layout = new VBox(10);
-            layout.setAlignment(Pos.CENTER_RIGHT);
-            layout.setStyle("-fx-background-color: azure; -fx-padding: 10;");
-            layout.getChildren().setAll(textField, submitButton);
-
-            dialog.setScene(new Scene(layout));
-            dialog.showAndWait();
-
-            return textField.getText();
-        }
-    }
-
-    class AddNodeLater implements Runnable
-    {
-        final Pane container;
-        final Node node;
-        final int idx;
-
-        public AddNodeLater(final Pane container, final int idx, final Node node)
-        {
-            this.container = container;
-            this.node = node;
-            this.idx = idx;
+                return textField.getText();
+            }
         }
 
-        @Override
-        public void run()
+        class AddNodeLater implements Runnable
         {
-            container.getChildren().add(idx, node);
+            final Pane container;
+            final Node node;
+            final int idx;
+
+            public AddNodeLater(final Pane container, final int idx, final Node node)
+            {
+                this.container = container;
+                this.node = node;
+                this.idx = idx;
+            }
+
+            @Override
+            public void run()
+            {
+                container.getChildren().add(idx, node);
+            }
         }
     }
 }

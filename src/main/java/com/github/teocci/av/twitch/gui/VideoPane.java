@@ -507,7 +507,6 @@ public class VideoPane extends Pane implements /*ItemListener,*/ PropertyChangeL
             case QUEUED_FOR_CONVERT:
                 setConvertingLayout();
                 setBorder(convertQueuedBorder);
-
                 break;
             case CONVERTING:
                 setConvertingLayout();
